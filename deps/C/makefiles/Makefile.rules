@@ -72,6 +72,10 @@ $(TARGET).elf: $(ALL_OBJS)
 	$(Q)$(CC) $(CFLAGS) $(ALL_OBJS) -o $@ $(LDFLAGS)
 	$(Q)$(SIZE) $@
 
+$(TARGET).out: $(ALL_OBJS)
+	$(TRACE_LINK)
+	$(CC) $(CFLAGS) $(ALL_OBJS) -o $@ $(LDFLAGS2)
+
 $(ALL_ASM_OBJS): %.o: % $(COMMON_PREREQS)
 	$(TRACE_ASSEMBLE)
 	$(Q)$(CC) $(ASMFLAGS) -c -o $@ $<
@@ -108,6 +112,14 @@ run_openocd:
 	@$(ECHO) "Start openocd server"
 	$(OPENOCD) $(OPENOCD_PORT_ARGS) $(OPENOCD_ARGS)
 
+qemu: $(TARGET).out
+	@$(ECHO) "*************************"
+	@$(ECHO) "QEMU program test starts."
+	@$(ECHO) "*************************"
+	$(QEMU_EXEC) $(TARGET).out
+	@$(ECHO) "*************************"
+	@$(ECHO) " QEMU program test ends."
+	@$(ECHO) "*************************"
 run_gdb: $(TARGET).elf
 	@$(ECHO) "Run gdb to connect openocd server and debug"
 	$(GDB) $< $(GDB_ARGS) $(GDB_CMDS)

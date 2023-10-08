@@ -28,6 +28,18 @@ compile_c:
 	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
 	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
 
+bin:
+	mkdir -p ${C_BUILD_DIR}
+	rm -f $(C_BUILD_DIR)/Makefile
+	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
+	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
+
+qemu:
+	mkdir -p ${C_BUILD_DIR}
+	rm -f $(C_BUILD_DIR)/Makefile
+	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
+	make qemu USE_HBIRD_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
+
 e203:
 
 	mkdir -p ${BUILD_DIR}
@@ -41,7 +53,6 @@ e203:
 
 wave: ${BUILD_DIR}
 	make wave IVERILOG_DIR=${IVERILOG_DIR} TESTCASE=${PROGRAM_DIR} SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
-
 
 sim: compile_c e203
 	make run IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} TESTCASE=${PROGRAM_DIR} SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR}

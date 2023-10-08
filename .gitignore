@@ -5,4 +5,5 @@ csrc/*.o.*
 build
 deps/C/gcc
 deps/C/openocd
+deps/C/qemu
 deps/Verilog/iverilog
