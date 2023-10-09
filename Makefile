@@ -2,7 +2,7 @@ SIM_ROOT_DIR     := ${PWD}
 BUILD_DIR      := ${PWD}/build
 E203_EXEC_DIR := ${BUILD_DIR}/e203_exec
 
-C_SRC_DIR := ${PWD}/csrc/
+C_SRC_DIR := ${PWD}/csrc
 C_BUILD_DIR := ${BUILD_DIR}/c_compiled
 
 PROGRAM_NAME     := main
