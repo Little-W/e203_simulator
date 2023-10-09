@@ -8,6 +8,10 @@ ALL_ASM_OBJS := $(ALL_ASMSRCS:=.o)
 ALL_C_OBJS := $(ALL_CSRCS:=.o)
 ALL_CXX_OBJS := $(ALL_CXXSRCS:=.o)
 
+ALL_C_ASM := $(ALL_CSRCS:=.S)
+ALL_CXX_ASM := $(ALL_CXXSRCS:=.S)
+
+ALL_ASM += $(ALL_C_ASM) $(ALL_CXX_ASM)
 ALL_OBJS += $(ALL_ASM_OBJS) $(ALL_C_OBJS) $(ALL_CXX_OBJS)
 
 ALL_DEPS := $(ALL_OBJS:=.d)
@@ -75,6 +79,7 @@ $(TARGET).elf: $(ALL_OBJS)
 $(TARGET).out: $(ALL_OBJS)
 	$(TRACE_LINK)
 	$(CC) $(CFLAGS) $(ALL_OBJS) -o $@ $(LDFLAGS2)
+	$(CC) $(CFLAGS) $(ALL_OBJS) -o $@ $(LDFLAGS2)
 
 $(ALL_ASM_OBJS): %.o: % $(COMMON_PREREQS)
 	$(TRACE_ASSEMBLE)
@@ -83,6 +88,9 @@ $(ALL_ASM_OBJS): %.o: % $(COMMON_PREREQS)
 $(ALL_C_OBJS): %.o: % $(COMMON_PREREQS)
 	$(TRACE_COMPILE)
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
+
+$(ALL_ASM): %.S: %
+	$(Q)$(CC) $(CFLAGS_ASM) -c -o $@ $<
 
 $(ALL_CXX_OBJS): %.o: % $(COMMON_PREREQS)
 	$(TRACE_COMPILE)
@@ -96,6 +104,8 @@ dasm: $(TARGET).elf
 	sed -i 's/@800/@000/g' $(TARGET).verilog
 	sed -i 's/@00002FB8/@00002000/g' $(TARGET).verilog
 
+asm: $(ALL_ASM)
+	
 bin: $(TARGET).elf
 	$(OBJCOPY) $< -O binary $(TARGET).bin
 
@@ -112,7 +122,10 @@ run_openocd:
 	@$(ECHO) "Start openocd server"
 	$(OPENOCD) $(OPENOCD_PORT_ARGS) $(OPENOCD_ARGS)
 
-qemu: $(TARGET).out
+$(TARGET)_qemu.dump: $(TARGET).out
+	$(OBJDUMP) -S -D $< > $@
+
+qemu: $(TARGET)_qemu.dump
 	@$(ECHO) "*************************"
 	@$(ECHO) "QEMU program test starts."
 	@$(ECHO) "*************************"

@@ -39,7 +39,13 @@ qemu:
 	rm -f $(C_BUILD_DIR)/Makefile
 	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
 	make qemu USE_HBIRD_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
-
+	
+asm:
+	mkdir -p ${C_BUILD_DIR}
+	rm -f $(C_BUILD_DIR)/Makefile
+	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
+	make asm USE_HBIRD_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
+	mv $(C_SRC_DIR)/*.S* $(C_BUILD_DIR)
 e203:
 
 	mkdir -p ${BUILD_DIR}
