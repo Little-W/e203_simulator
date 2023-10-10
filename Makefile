@@ -14,7 +14,7 @@ TEST_PROGRAM     := ${BUILD_DIR}/test_compiled/${TEST_PROGRAM_NAME}
 E203_SRC := ${PWD}/deps/Verilog/e203_veri_src
 
 IVERILOG_DIR := ${PWD}/deps/Verilog/iverilog/bin
-SIM_TOOL          := iverilog
+SIM_TOOL          := verilator
 
 ifeq ($(SIM_TOOL),iverilog)
 E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_iverilog

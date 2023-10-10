@@ -26,7 +26,7 @@ TEST_RUNDIR := test_out
 # The following portion is depending on the EDA tools you are using, Please add them by yourself according to your EDA vendors
 #To-ADD: to add the simulatoin tool
 #SIM_TOOL      := vcs
-SIM_TOOL      := iverilog
+SIM_TOOL      := verilator
 
 #To-ADD: to add the simulatoin tool options
 ifeq ($(SIM_TOOL),verilator)
