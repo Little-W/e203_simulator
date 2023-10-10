@@ -38,39 +38,39 @@ SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32mi-p
 include ${PWD}/deps/C/test_src/Makefile
 
 compile_c:
-	mkdir -p ${C_BUILD_DIR}
-	rm -f $(C_BUILD_DIR)/Makefile
-	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
+	@mkdir -p ${C_BUILD_DIR}
+	@rm -f $(C_BUILD_DIR)/Makefile
+	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
 	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
 
 bin:
-	mkdir -p ${C_BUILD_DIR}
-	rm -f $(C_BUILD_DIR)/Makefile
-	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
+	@mkdir -p ${C_BUILD_DIR}
+	@rm -f $(C_BUILD_DIR)/Makefile
+	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
 	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
 
 qemu:
-	mkdir -p ${C_BUILD_DIR}
-	rm -f $(C_BUILD_DIR)/Makefile
-	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
+	@mkdir -p ${C_BUILD_DIR}
+	@rm -f $(C_BUILD_DIR)/Makefile
+	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
 	make qemu USE_HBIRD_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
 	
 asm:
-	mkdir -p ${C_BUILD_DIR}
-	rm -f $(C_BUILD_DIR)/Makefile
-	ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
+	@mkdir -p ${C_BUILD_DIR}
+	@rm -f $(C_BUILD_DIR)/Makefile
+	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
 	make asm USE_HB_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
-	mv $(C_SRC_DIR)/*.S* $(C_BUILD_DIR)
+	@mv $(C_SRC_DIR)/*.S* $(C_BUILD_DIR)
 
 e203:
-	mkdir -p ${BUILD_DIR}
-	rm -rf ${E203_EXEC_DIR}
-	mkdir -p ${E203_EXEC_DIR}
-	rm -f ${BUILD_DIR}/Makefile
-	ln -s ${SIM_ROOT_DIR}/deps/Verilog/run.makefile ${BUILD_DIR}/Makefile
-	cp -rf ${E203_SRC}/ ${BUILD_DIR}/e203_src_tmp
+	@mkdir -p ${BUILD_DIR}
+	@rm -rf ${E203_EXEC_DIR}
+	@mkdir -p ${E203_EXEC_DIR}
+	@rm -f ${BUILD_DIR}/Makefile
+	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/run.makefile ${BUILD_DIR}/Makefile
+	@cp -rf ${E203_SRC}/ ${BUILD_DIR}/e203_src_tmp
 	make compile BUILD_DIR=${BUILD_DIR} SIM_TOOL=${SIM} IVERILOG_DIR=${IVERILOG_DIR} -C ${BUILD_DIR}
-	cp -f ${BUILD_DIR}/vvp.exec ${E203_EXEC_DIR}
+	@cp -f ${BUILD_DIR}/vvp.exec ${E203_EXEC_DIR}
 
 wave: ${BUILD_DIR}
 	make wave IVERILOG_DIR=${IVERILOG_DIR} TESTCASE=${PROGRAM_DIR} SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
@@ -112,26 +112,27 @@ test_all: e203
 
 
 clean:
-	rm -rf build
-	rm -rf csrc/*.o
-	rm -rf csrc/*.o.*
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/*.o
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/*.o.*
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/Drivers/*.o
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/Drivers/*.o.*
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/GCC/*.o
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/GCC/*.o.*
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/Stubs/*.o
-	rm -rf deps/C/SoC/hbirdv2/Common/Source/Stubs/*.o.*
+	@rm -rf build
+	@rm -rf csrc/*.o
+	@rm -rf csrc/*.o.*
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/*.o
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/*.o.*
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Drivers/*.o
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Drivers/*.o.*
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/GCC/*.o
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/GCC/*.o.*
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Stubs/*.o
+	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Stubs/*.o.*
 
-	rm -rf deps/C/SoC/hbird/Common/Source/*.o
-	rm -rf deps/C/SoC/hbird/Common/Source/*.o.*
-	rm -rf deps/C/SoC/hbird/Common/Source/Drivers/*.o
-	rm -rf deps/C/SoC/hbird/Common/Source/Drivers/*.o.*
-	rm -rf deps/C/SoC/hbird/Common/Source/GCC/*.o
-	rm -rf deps/C/SoC/hbird/Common/Source/GCC/*.o.*
-	rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o
-	rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o.*
+	@rm -rf deps/C/SoC/hbird/Common/Source/*.o
+	@rm -rf deps/C/SoC/hbird/Common/Source/*.o.*
+	@rm -rf deps/C/SoC/hbird/Common/Source/Drivers/*.o
+	@rm -rf deps/C/SoC/hbird/Common/Source/Drivers/*.o.*
+	@rm -rf deps/C/SoC/hbird/Common/Source/GCC/*.o
+	@rm -rf deps/C/SoC/hbird/Common/Source/GCC/*.o.*
+	@rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o
+	@rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o.*
+	@echo " Clean done."
 
 .PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src
 

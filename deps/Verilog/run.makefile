@@ -154,14 +154,20 @@ wave:
 	${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${WAV_FILE}  &
 
 run: compile
-	rm -rf ${SIM_DIR_NAME}
-	mkdir ${SIM_DIR_NAME}
-	cd ${TEST_RUNDIR}; ${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${PROGRAM} +SIM_TOOL=${SIM_TOOL} 2>&1 | tee ${SIM_DIR_NAME}.log;
+	@rm -rf ${SIM_DIR_NAME}
+	@mkdir ${SIM_DIR_NAME}
+	@cd ${TEST_RUNDIR};${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${PROGRAM} +SIM_TOOL=${SIM_TOOL} 2>&1 | tee ${SIM_DIR_NAME}.log
 
 test: compile
-	if [ ! -e ${TEST_RUNDIR} ] ; then mkdir ${TEST_RUNDIR} ;fi
-	cd ${TEST_RUNDIR}; ${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${TEST_PROGRAM} +SIM_TOOL=${SIM_TOOL} 2>&1 | tee ${TEST_NAME}.log
-	if [ ${TEST_ALL} -eq 0 ];then   gvim -p ${TEST_PROGRAM}.dump & ${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${WAV_FILE} &   fi
+	@if [ ! -e ${TEST_RUNDIR} ] ;	\
+	then 	\
+		mkdir ${TEST_RUNDIR} ;	\
+	fi
+	cd ${TEST_RUNDIR};${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${TEST_PROGRAM} +SIM_TOOL=${SIM_TOOL} 2>&1 | tee ${TEST_NAME}.log
+	@if [ ${TEST_ALL} -eq 0 ];	\
+	then	\
+		gvim -p ${TEST_PROGRAM}.dump & ${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${WAV_FILE} &   \
+	fi
 
 .PHONY: run clean all
 
