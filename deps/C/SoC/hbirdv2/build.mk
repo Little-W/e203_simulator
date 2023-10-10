@@ -35,10 +35,10 @@ endif
 
 RISCV_ARCH ?= $(word 1, $(CORE_ARCH_ABI))
 RISCV_ABI ?= $(word 2, $(CORE_ARCH_ABI))
-USE_HBIRD_SDK := 1
+USE_HB_SDK := 1
 ##### Put your Source code Management configurations below #####
 
-ifeq ($(USE_HBIRD_SDK),1)
+ifeq ($(USE_HB_SDK),1)
 
 INCDIRS += $(HBIRD_SDK_SOC_COMMON)/Include
 
@@ -47,12 +47,12 @@ C_SRCDIRS += $(HBIRD_SDK_SOC_COMMON)/Source $(HBIRD_SDK_SOC_COMMON)/Source/Drive
 
 ASM_SRCS += $(HBIRD_SDK_SOC_COMMON)/Source/GCC/startup_hbirdv2.S \
 		$(HBIRD_SDK_SOC_COMMON)/Source/GCC/intexc_hbirdv2.S
-endif
 # Add extra board related source files and header files
 VALID_HBIRD_SDK_SOC_BOARD := $(wildcard $(HBIRD_SDK_SOC_BOARD))
 ifneq ($(VALID_HBIRD_SDK_SOC_BOARD),)
 INCDIRS += $(VALID_HBIRD_SDK_SOC_BOARD)/Include
 C_SRCDIRS += $(VALID_HBIRD_SDK_SOC_BOARD)/Source
+endif
 endif
 
 

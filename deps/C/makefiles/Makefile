@@ -2,6 +2,8 @@ TARGET = main
 
 SRCDIRS = ${C_SRC_DIR} src
 
+TEST_SRCDIRS = ${TEST_SRCDIR} src
+
 INCDIRS = ${C_SRC_DIR} inc
 
 COMMON_FLAGS := -O2

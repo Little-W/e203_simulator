@@ -3,9 +3,13 @@ ARCH := $(shell uname -m)
 RUN_DIR      := ${PWD}
 BUILD_DIR      := ${PWD}/build
 PROGRAM_NAME     := main
-PROGRAM_DIR     := ${BUILD_DIR}/c_compiled/${PROGRAM_NAME}
-DUMPWAVE     := 1
+PROGRAM     := ${BUILD_DIR}/c_compiled/${PROGRAM_NAME}
 
+TEST_PROGRAM_NAME     := rv32mi-p-breakpoint
+TEST_PROGRAM     := ${BUILD_DIR}/test_compiled/${TEST_PROGRAM_NAME}
+
+DUMPWAVE     := 1
+TEST_ALL := 0
 SMIC130LL    := 0
 GATE_SIM     := 0
 GATE_SDF     := 0
@@ -13,7 +17,9 @@ GATE_NOTIME     := 0
 
 VSRC_DIR     := ${BUILD_DIR}/e203_src_tmp/rtl
 VTB_DIR      := ${BUILD_DIR}/e203_src_tmp/tb
+TEST_NAME     := $(notdir $(patsubst %.dump,%,${TEST_PROGRAM}))
 SIM_DIR_NAME     := sim_out
+TEST_RUNDIR := test_out
 
 RTL_V_FILES		:= $(wildcard ${VSRC_DIR}/*/*.v ${VSRC_DIR}/*/*/*.v)
 TB_V_FILES		:= $(wildcard ${VTB_DIR}/*.v)
@@ -144,13 +150,18 @@ compile.flg: ${RTL_V_FILES} ${TB_V_FILES}
 compile: compile.flg
 
 wave:
-	gvim -p ${PROGRAM_DIR}.spike.log ${PROGRAM_DIR}.dump &
+	gvim -p ${PROGRAM}.dump &
 	${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${WAV_FILE}  &
 
 run: compile
 	rm -rf ${SIM_DIR_NAME}
 	mkdir ${SIM_DIR_NAME}
-	cd ${SIM_DIR_NAME}; ${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${PROGRAM_DIR} +SIM_TOOL=${SIM_TOOL} 2>&1 | tee ${SIM_DIR_NAME}.log;
+	cd ${TEST_RUNDIR}; ${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${PROGRAM} +SIM_TOOL=${SIM_TOOL} 2>&1 | tee ${SIM_DIR_NAME}.log;
+
+test: compile
+	if [ ! -e ${TEST_RUNDIR} ] ; then mkdir ${TEST_RUNDIR} ;fi
+	cd ${TEST_RUNDIR}; ${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${TEST_PROGRAM} +SIM_TOOL=${SIM_TOOL} 2>&1 | tee ${TEST_NAME}.log
+	if [ ${TEST_ALL} -eq 0 ];then   gvim -p ${TEST_PROGRAM}.dump & ${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${WAV_FILE} &   fi
 
 .PHONY: run clean all
 
