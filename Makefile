@@ -1,6 +1,5 @@
 SIM_ROOT_DIR     := ${PWD}
 BUILD_DIR      := ${PWD}/build
-E203_EXEC_DIR := ${BUILD_DIR}/e203_exec
 
 TEST_SRCDIR := ${PWD}/test_src
 C_SRC_DIR := ${PWD}/csrc
@@ -15,7 +14,17 @@ TEST_PROGRAM     := ${BUILD_DIR}/test_compiled/${TEST_PROGRAM_NAME}
 E203_SRC := ${PWD}/deps/Verilog/e203_veri_src
 
 IVERILOG_DIR := ${PWD}/deps/Verilog/iverilog/bin
-SIM          := iverilog
+SIM_TOOL          := iverilog
+
+ifeq ($(SIM_TOOL),iverilog)
+E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_iverilog
+EXEC_POST_PROC := @cp -f ${BUILD_DIR}/vvp.exec ${E203_EXEC_DIR}
+endif
+ifeq ($(SIM_TOOL),verilator)
+E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_verilator
+EXEC_POST_PROC := @cp -f ${BUILD_DIR}/verilator_build/Vtb_top ${E203_EXEC_DIR}
+endif
+
 DUMPWAVE     := 1
 
 CORE        := e203
@@ -29,7 +38,7 @@ core_name = $(shell echo $(CORE) | tr A-Z a-z)
 SELF_TESTS := $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32uc-p*.dump))
 ifeq ($(core_name),${E203})
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32um-p*.dump))
-SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32ua-p*.dump))
+SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD}/ ${BUILD_DIR}/e203_src_tmp_DIR}/test_compiled/rv32ua-p*.dump))
 endif
 
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32ui-p*.dump))
@@ -69,17 +78,17 @@ e203:
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/run.makefile ${BUILD_DIR}/Makefile
 	@cp -rf ${E203_SRC}/ ${BUILD_DIR}/e203_src_tmp
-	make compile BUILD_DIR=${BUILD_DIR} SIM_TOOL=${SIM} IVERILOG_DIR=${IVERILOG_DIR} -C ${BUILD_DIR}
-	@cp -f ${BUILD_DIR}/vvp.exec ${E203_EXEC_DIR}
+	make compile BUILD_DIR=${BUILD_DIR} SIM_TOOL=${SIM_TOOL} IVERILOG_DIR=${IVERILOG_DIR} -C ${BUILD_DIR}
+	${EXEC_POST_PROC}
 
 wave: ${BUILD_DIR}
-	make wave IVERILOG_DIR=${IVERILOG_DIR} TESTCASE=${PROGRAM_DIR} SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
+	make wave IVERILOG_DIR=${IVERILOG_DIR} TESTCASE=${PROGRAM_DIR} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
 
 run:
-	make run IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM_DIR=${PROGRAM_DIR} SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR}
+	make run IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM_DIR=${PROGRAM_DIR} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR}
 
 sim: compile_c e203
-	make run IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM_DIR=${PROGRAM_DIR} SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR}
+	make run IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM_DIR=${PROGRAM_DIR} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR}
 
 test: e203
 
@@ -91,7 +100,7 @@ test: e203
 		echo "****************************************" ;	\
 		echo -e "\n" ;	\
 	else	\
-		make test IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} TEST_PROGRAM=${TEST_PROGRAM} SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR} ;	\
+		make test IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} TEST_PROGRAM=${TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR} ;	\
 	fi
 
 
@@ -105,7 +114,7 @@ test_all: e203
 		echo "****************************************" ;	\
 		echo -e "\n" ;	\
 	else	\
-		$(foreach tst,$(SELF_TESTS), make test DUMPWAVE=0 IVERILOG_DIR=${IVERILOG_DIR} TEST_PROGRAM=${tst} TEST_ALL=1 SIM_TOOL=${SIM} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR};)\
+		$(foreach tst,$(SELF_TESTS), make test DUMPWAVE=0 IVERILOG_DIR=${IVERILOG_DIR} TEST_PROGRAM=${tst} TEST_ALL=1 SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR};)\
 		rm -rf ${BUILD_DIR}/regress.res ;\
 		find ${BUILD_DIR}/test_out/ -name "rv32*.log" -exec ${SIM_ROOT_DIR}/deps/C/tools/find_test_fail.csh {} >> ${BUILD_DIR}/regress.res \;; cat ${BUILD_DIR}/regress.res ;	\
 	fi
