@@ -77,7 +77,7 @@ e203:
 	@rm -rf ${E203_EXEC_DIR}
 	@mkdir -p ${E203_EXEC_DIR}
 	@rm -f ${BUILD_DIR}/Makefile
-	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/run.makefile ${BUILD_DIR}/Makefile
+	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/Makefile ${BUILD_DIR}/Makefile
 	@cp -rf ${E203_SRC}/ ${BUILD_DIR}/e203_src_tmp
 	make compile BUILD_DIR=${BUILD_DIR} SIM_TOOL=${SIM_TOOL} IVERILOG_DIR=${IVERILOG_DIR} -C ${BUILD_DIR}
 	${EXEC_POST_PROC}
@@ -95,11 +95,11 @@ test: e203
 
 	@if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
 	then	\
-		echo -e "\n" ;	\
+		echo ;	\
 		echo "****************************************" ;	\
 		echo '    do "make compile_test_src" first';	\
 		echo "****************************************" ;	\
-		echo -e "\n" ;	\
+		echo ;	\
 	else	\
 		make test IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} TEST_PROGRAM=${TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR} ;	\
 	fi
@@ -110,11 +110,11 @@ compile_test_src:
 test_all: e203
 	@if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
 	then	\
-		echo -e "\n" ;	\
+		echo  ;	\
 		echo "****************************************" ;	\
 		echo '    do "make compile_test_src" first';	\
 		echo "****************************************" ;	\
-		echo -e "\n" ;	\
+		echo ;	\
 	else	\
 		$(foreach tst,$(SELF_TESTS), make test DUMPWAVE=0 IVERILOG_DIR=${IVERILOG_DIR} TEST_PROGRAM=${tst} TEST_ALL=1 SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR};)\
 		rm -rf ${BUILD_DIR}/regress.res ;\
