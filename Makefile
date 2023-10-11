@@ -29,22 +29,22 @@ DUMPWAVE     := 1
 
 CORE        := e203
 CFG         := ${CORE}_config
+XLEN	    := 32
 
 USE_HB_SDK := 1
 
 CORE_NAME = $(shell echo $(CORE) | tr a-z A-Z)
 core_name = $(shell echo $(CORE) | tr A-Z a-z)
 
-SELF_TESTS := $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32uc-p*.dump))
+SELF_TESTS := $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN}uc-p*.dump))
 ifeq ($(core_name),${E203})
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32um-p*.dump))
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD}/ ${BUILD_DIR}/e203_src_tmp_DIR}/test_compiled/rv32ua-p*.dump))
 endif
 
-SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32ui-p*.dump))
-SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv32mi-p*.dump))
+SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN}ui-p*.dump))
+SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN}mi-p*.dump))
 
-include ${PWD}/deps/C/test_src/Makefile
 
 compile_c:
 	@mkdir -p ${C_BUILD_DIR}
@@ -103,7 +103,8 @@ test: e203
 		make test IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} TEST_PROGRAM=${TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR} ;	\
 	fi
 
-
+compile_test_src:
+	make SIM_ROOT_DIR=${SIM_ROOT_DIR} BUILD_DIR=${BUILD_DIR} XLEN=${XLEN} -j$(nproc) -C ${PWD}/deps/C/test_src/
 
 test_all: e203
 	@if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
@@ -116,7 +117,7 @@ test_all: e203
 	else	\
 		$(foreach tst,$(SELF_TESTS), make test DUMPWAVE=0 IVERILOG_DIR=${IVERILOG_DIR} TEST_PROGRAM=${tst} TEST_ALL=1 SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR};)\
 		rm -rf ${BUILD_DIR}/regress.res ;\
-		find ${BUILD_DIR}/test_out/ -name "rv32*.log" -exec ${SIM_ROOT_DIR}/deps/C/tools/find_test_fail.csh {} >> ${BUILD_DIR}/regress.res \;; cat ${BUILD_DIR}/regress.res ;	\
+		find ${BUILD_DIR}/test_out/ -name "rv${XLEN}*.log" -exec ${SIM_ROOT_DIR}/deps/C/tools/find_test_fail.csh {} >> ${BUILD_DIR}/regress.res \;; cat ${BUILD_DIR}/regress.res ;	\
 	fi
 
 

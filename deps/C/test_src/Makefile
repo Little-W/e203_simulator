@@ -36,6 +36,8 @@ RISCV_OBJCOPY ?= $(RISCV_PREFIX)objcopy -O verilog
 
 vpath %.S $(src_dir)
 
+default: compile_test_src
+
 #------------------------------------------------------------
 # Build assembly tests
 
