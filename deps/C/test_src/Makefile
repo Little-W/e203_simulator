@@ -32,6 +32,7 @@ include $(src_dir)/rv32mi/Makefrag
 RISCV_GCC_FLAGS ?= -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
 
 vpath %.S $(src_dir)
+vpath %.c $(src_dir)
 
 default: compile_test_src
 
@@ -100,7 +101,10 @@ tests_verilog = $(addsuffix .verilog, $(tests))
 tests_dump = $(addsuffix .dump, $(tests))
 tests_hex = $(addsuffix .hex, $(tests))
 
+
+
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
+
 compile_test_src: $(OUT_DIR) $(tests_dump)
 

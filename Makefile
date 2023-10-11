@@ -11,25 +11,18 @@ PROGRAM     := ${BUILD_DIR}/c_compiled/${PROGRAM_NAME}
 TEST_PROGRAM_NAME     := rv32mi-p-breakpoint
 TEST_PROGRAM     := ${BUILD_DIR}/test_compiled/${TEST_PROGRAM_NAME}
 
-E203_SRC := ${PWD}/deps/Verilog/e203_veri_src
+DUMMY_TEST_PROGRAM     := ${BUILD_DIR}/dummy_test/dummy_test
 
-IVERILOG_DIR := ${PWD}/deps/Verilog/iverilog/bin
-SIM_TOOL          := verilator
-
-ifeq ($(SIM_TOOL),iverilog)
-E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_iverilog
-EXEC_POST_PROC := @cp -f ${BUILD_DIR}/vvp.exec ${E203_EXEC_DIR}
-endif
-ifeq ($(SIM_TOOL),verilator)
-E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_verilator
-EXEC_POST_PROC := @cp -f ${BUILD_DIR}/verilator_build/Vtb_top ${E203_EXEC_DIR}
-endif
+SIM_TOOL          := verilator4
 
 DUMPWAVE     := 1
 
 CORE        := e203
 CFG         := ${CORE}_config
 XLEN	    := 32
+SOC := hbirdv2
+
+E203_SRC := ${PWD}/deps/Verilog/e203_src/
 
 USE_OPEN_GNU_GCC := 0
 USE_HB_SDK := 1
@@ -51,45 +44,45 @@ compile_c:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=${SOC} CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} TARGET=${PROGRAM_NAME} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 bin:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=${SOC} CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 qemu:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make qemu USE_HBIRD_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make qemu USE_HBIRD_SDK=0 SOC=${SOC} CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	
 asm:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make asm USE_HB_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make asm USE_HB_SDK=0 SOC=${SOC} CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	@mv $(C_SRC_DIR)/*.S* $(C_BUILD_DIR)
 
 e203:
 	@mkdir -p ${BUILD_DIR}
-	@rm -rf ${E203_EXEC_DIR}
-	@mkdir -p ${E203_EXEC_DIR}
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/Makefile ${BUILD_DIR}/Makefile
-	@cp -rf ${E203_SRC}/ ${BUILD_DIR}/e203_src_tmp
-	make compile BUILD_DIR=${BUILD_DIR} SIM_TOOL=${SIM_TOOL} IVERILOG_DIR=${IVERILOG_DIR} -C ${BUILD_DIR}
-	${EXEC_POST_PROC}
+	@rm -rf ${BUILD_DIR}/e203_src_tmp
+	@cp -rf ${E203_SRC}/${SOC} ${BUILD_DIR}/e203_src_tmp
+	@cp -rf ${E203_SRC}/dpi/ ${BUILD_DIR}/e203_src_tmp
+	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} BUILD_DIR=${BUILD_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} -C ${BUILD_DIR}
+
 
 wave: ${BUILD_DIR}
-	make wave IVERILOG_DIR=${IVERILOG_DIR} TESTCASE=${PROGRAM_DIR} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
+	make wave SIM_ROOT_DIR=${SIM_ROOT_DIR} TESTCASE=${PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
 
 run:
-	make run IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM_DIR=${PROGRAM_DIR} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR}
+	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
 
 sim: compile_c e203
-	make run IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM_DIR=${PROGRAM_DIR} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR}
+	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
 
 test: e203
 
@@ -101,7 +94,7 @@ test: e203
 		echo "****************************************" ;	\
 		echo ;	\
 	else	\
-		make test IVERILOG_DIR=${IVERILOG_DIR} DUMPWAVE=${DUMPWAVE} TEST_PROGRAM=${TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR} ;	\
+		make test DUMPWAVE=${DUMPWAVE} TEST_PROGRAM=${TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR} ;	\
 	fi
 
 compile_test_src:
@@ -116,11 +109,34 @@ test_all: e203
 		echo "****************************************" ;	\
 		echo ;	\
 	else	\
-		$(foreach tst,$(SELF_TESTS), make test DUMPWAVE=0 IVERILOG_DIR=${IVERILOG_DIR} TEST_PROGRAM=${tst} TEST_ALL=1 SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} E203_EXEC_DIR=${E203_EXEC_DIR} -C ${BUILD_DIR};)\
+		$(foreach tst,$(SELF_TESTS), make test DUMPWAVE=0 TEST_PROGRAM=${tst} TEST_ALL=1 SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR};)\
 		rm -rf ${BUILD_DIR}/regress.res ;\
 		find ${BUILD_DIR}/test_out/ -name "rv${XLEN}*.log" -exec ${SIM_ROOT_DIR}/deps/C/tools/find_test_fail.csh {} >> ${BUILD_DIR}/regress.res \;; cat ${BUILD_DIR}/regress.res ;	\
 	fi
 
+debug_env:
+	@mkdir -p ${BUILD_DIR}/dummy_test
+	@rm -f ${BUILD_DIR}/Makefile
+	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/Makefile ${BUILD_DIR}/Makefile
+	@cp -f ${SIM_ROOT_DIR}/deps/C/test_src/dummy_test.c ${BUILD_DIR}/dummy_test
+	$(eval C_SRC_DIR = ${BUILD_DIR}/dummy_test)
+	$(eval C_BUILD_DIR := ${BUILD_DIR}/dummy_test)
+	$(eval PROGRAM := DUMMY_TEST_PROGRAM)
+	$(eval PROGRAM_NAME := dummy_test)
+debug_sim: debug_env compile_c
+	@cp -rf ${E203_SRC}/${SOC} ${BUILD_DIR}/e203_src_tmp
+	@cp -rf ${E203_SRC}/dpi ${BUILD_DIR}/e203_src_tmp
+	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
+
+debug_openocd: 
+	make debug_openocd SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
+
+debug_gdb: 
+	@mkdir -p ${BUILD_DIR}
+	@rm -f ${BUILD_DIR}/Makefile
+	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/Makefile ${BUILD_DIR}/Makefile
+	@cp -rf ${E203_SRC}/ ${BUILD_DIR}/e203_src_tmp
+	make debug_gdb SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
 
 clean:
 	@rm -rf build
@@ -145,5 +161,5 @@ clean:
 	@rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o.*
 	@echo " Clean done."
 
-.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src
+.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim
 

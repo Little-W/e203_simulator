@@ -278,7 +278,7 @@ module tb_top(
   wire jtag_TDO;
   wire jtag_TCK;
   wire jtag_TMS;
-  wire jtag_TRSTn;
+  wire jtag_TRST;
 
   jtagdpi jtagdpi(
   .clk_i(clk),
@@ -288,7 +288,7 @@ module tb_top(
   .jtag_tms(jtag_TMS),
   .jtag_tdi(jtag_TDI),
   .jtag_tdo(jtag_TDO),
-  .jtag_trst_n(jtag_TRSTn),
+  .jtag_trst_n(jtag_TRST),
   .jtag_srst_n()
   );
 `else

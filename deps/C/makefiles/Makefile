@@ -1,4 +1,4 @@
-TARGET = main
+TARGET := main
 
 SRCDIRS = ${C_SRC_DIR} src
 
