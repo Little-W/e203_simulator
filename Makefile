@@ -31,6 +31,7 @@ CORE        := e203
 CFG         := ${CORE}_config
 XLEN	    := 32
 
+USE_OPEN_GNU_GCC := 0
 USE_HB_SDK := 1
 
 CORE_NAME = $(shell echo $(CORE) | tr a-z A-Z)
@@ -50,25 +51,25 @@ compile_c:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
+	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 bin:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
+	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 qemu:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make qemu USE_HBIRD_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
+	make qemu USE_HBIRD_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	
 asm:
 	@mkdir -p ${C_BUILD_DIR}
 	@rm -f $(C_BUILD_DIR)/Makefile
 	@ln -s $(SIM_ROOT_DIR)/deps/C/makefiles/Makefile ${C_BUILD_DIR}
-	make asm USE_HB_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} -C ${C_BUILD_DIR}
+	make asm USE_HB_SDK=0 SOC=hbirdv2 CORE=e203 DOWNLOAD=ilm SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	@mv $(C_SRC_DIR)/*.S* $(C_BUILD_DIR)
 
 e203:

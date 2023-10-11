@@ -4,6 +4,7 @@
 
 XLEN ?= 32
 
+include ${SIM_ROOT_DIR}/deps/C/makefiles/Makefile.conf
 src_dir := ${SIM_ROOT_DIR}/deps/C/test_src/
 
 OUT_DIR = $(BUILD_DIR)/test_compiled
@@ -28,11 +29,7 @@ include $(src_dir)/rv32mi/Makefrag
 #include $(src_dir)/rv32imc_1/Makefrag
 #include $(src_dir)/rv32imc_2/Makefrag
 
-RISCV_PREFIX ?= ${SIM_ROOT_DIR}/deps/C/gcc/bin/riscv64-unknown-elf-
-RISCV_GCC ?= $(RISCV_PREFIX)gcc
 RISCV_GCC_FLAGS ?= -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
-RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump --disassemble-all
-RISCV_OBJCOPY ?= $(RISCV_PREFIX)objcopy -O verilog 
 
 vpath %.S $(src_dir)
 
@@ -42,15 +39,15 @@ default: compile_test_src
 # Build assembly tests
 
 %.dump: % 
-	$(RISCV_OBJDUMP) $(OUT_DIR)/$< > $(OUT_DIR)/$@
-	$(RISCV_OBJCOPY) $(OUT_DIR)/$<   $(OUT_DIR)/$<.verilog
+	$(OBJDUMP) --disassemble-all $(OUT_DIR)/$< > $(OUT_DIR)/$@
+	$(OBJCOPY) -O verilog $(OUT_DIR)/$<   $(OUT_DIR)/$<.verilog
 	sed -i 's/@800/@000/g' $(OUT_DIR)/$<.verilog
 	sed -i 's/@00002FB8/@00002000/g' $(OUT_DIR)/$<.verilog
 
 define compile_template
 
 $$($(1)_p_tests): $(1)-p-%: $(1)/%.S
-	$$(RISCV_GCC) $(2) $$(RISCV_GCC_FLAGS) -I ${SIM_ROOT_DIR}/deps/C/test_libs -T ${SIM_ROOT_DIR}/deps/C/test_libs/link.ld $$< -o $(OUT_DIR)/$$@
+	$$(CC) $(2) $$(RISCV_GCC_FLAGS) -I ${SIM_ROOT_DIR}/deps/C/test_libs -T ${SIM_ROOT_DIR}/deps/C/test_libs/link.ld $$< -o $(OUT_DIR)/$$@
 $(1)_tests += $$($(1)_p_tests)
 
 $(1)_tests_dump = $$(addsuffix .dump, $$($(1)_tests))
@@ -63,6 +60,19 @@ tests += $$($(1)_tests)
 
 endef
 
+ifeq ($(USE_OPEN_GNU_GCC),1)
+$(eval $(call compile_template,rv32ui,-march=rv32imafdc_zifencei -mabi=ilp32))
+$(eval $(call compile_template,rv32uc,-march=rv32imafdc_zifencei -mabi=ilp32))
+$(eval $(call compile_template,rv32um,-march=rv32imafdc_zifencei -mabi=ilp32))
+$(eval $(call compile_template,rv32ua,-march=rv32imafdc_zifencei -mabi=ilp32))
+$(eval $(call compile_template,rv32uf,-march=rv32imafdc_zifencei -mabi=ilp32))
+$(eval $(call compile_template,rv32ud,-march=rv32imafdc_zifencei -mabi=ilp32))
+#$(eval $(call compile_template,rv32si,-march=rv32imafdc -mabi=ilp32))
+$(eval $(call compile_template,rv32mi,-march=rv32imafdc_zifencei -mabi=ilp32))
+#$(eval $(call compile_template,rv32imc_0,-march=rv32imafdc -mabi=ilp32))
+#$(eval $(call compile_template,rv32imc_1,-march=rv32imafdc -mabi=ilp32))
+#$(eval $(call compile_template,rv32imc_2,-march=rv32imafdc -mabi=ilp32))
+else
 $(eval $(call compile_template,rv32ui,-march=rv32imafdc -mabi=ilp32))
 $(eval $(call compile_template,rv32uc,-march=rv32imafdc -mabi=ilp32))
 $(eval $(call compile_template,rv32um,-march=rv32imafdc -mabi=ilp32))
@@ -74,6 +84,7 @@ $(eval $(call compile_template,rv32mi,-march=rv32imafdc -mabi=ilp32))
 #$(eval $(call compile_template,rv32imc_0,-march=rv32imafdc -mabi=ilp32))
 #$(eval $(call compile_template,rv32imc_1,-march=rv32imafdc -mabi=ilp32))
 #$(eval $(call compile_template,rv32imc_2,-march=rv32imafdc -mabi=ilp32))
+endif
 ifeq ($(XLEN),64)
 $(eval $(call compile_template,rv64ui,-march=rv64imafdc -mabi=lp64))
 $(eval $(call compile_template,rv64uc,-march=rv64imafdc -mabi=lp64))
