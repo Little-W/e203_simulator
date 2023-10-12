@@ -27,7 +27,7 @@ TEST_RUNDIR := test_out
 # The following portion is depending on the EDA tools you are using, Please add them by yourself according to your EDA vendors
 #To-ADD: to add the simulatoin tool
 #SIM_TOOL      := vcs
-SIM_TOOL      := verilator4
+SIM_TOOL      := verilator5
 TRUE_SIM_TOOL := $(shell echo ${SIM_TOOL} | grep -o '[^0-9]*')
 IVERILOG_DIR := ${SIM_ROOT_DIR}/deps/Verilog/iverilog/bin
 VERILATOR_DIR :=  ${SIM_ROOT_DIR}/deps/Verilog/${SIM_TOOL}/bin

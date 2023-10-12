@@ -14,7 +14,7 @@ TEST_PROGRAM     := ${BUILD_DIR}/test_compiled/${TEST_PROGRAM_NAME}
 DUMMY_TEST_PROGRAM     := ${BUILD_DIR}/dummy_test/dummy_test
 DEBUG_TRACE := 0
 
-SIM_TOOL          := verilator4
+SIM_TOOL          := verilator5
 
 DUMPWAVE     := 1
 
