@@ -4,7 +4,7 @@
 
 module jtagdpi #(
   parameter string Name = "jtag0", // name of the JTAG interface (display only)
-  parameter int ListenPort = 44853 // TCP port to listen on
+  parameter int ListenPort = 5555 // TCP port to listen on
 )(
   input  logic clk_i,
   input  logic rst_ni,

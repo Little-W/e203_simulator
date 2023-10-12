@@ -3,7 +3,11 @@
 
 module tb_top(
     input clk,
-    input rst_n
+    input rst_n,
+    output tdo_o,
+    input	tck_i,
+    input	tms_i,
+    input	tdi_i
 );
 
   `define CPU_TOP u_e203_soc_top.u_e203_subsys_top.u_e203_subsys_main.u_e203_cpu_top
@@ -233,7 +237,7 @@ module tb_top(
   end
 
   // watchdog
-`ifdef JTAGDPI
+`ifdef JTAGVPI
 `else
   always @(posedge clk) begin
     if (cycle_count[20] == 1'b1) begin
@@ -273,24 +277,16 @@ module tb_top(
 
     end 
 
-`ifdef JTAGDPI
+`ifdef JTAGVPI
   wire jtag_TDI;
   wire jtag_TDO;
   wire jtag_TCK;
   wire jtag_TMS;
-  wire jtag_TRST;
+  assign jtag_TDI = tdi_i;
+  assign tdo_o = jtag_TDO;
+  assign jtag_TCK = tck_i;
+  assign jtag_TMS = tms_i;
 
-  jtagdpi jtagdpi(
-  .clk_i(clk),
-  .rst_ni(rst_n),
-
-  .jtag_tck(jtag_TCK),
-  .jtag_tms(jtag_TMS),
-  .jtag_tdi(jtag_TDI),
-  .jtag_tdo(jtag_TDO),
-  .jtag_trst_n(jtag_TRST),
-  .jtag_srst_n()
-  );
 `else
   wire jtag_TDI = 1'b0;
   wire jtag_TDO;

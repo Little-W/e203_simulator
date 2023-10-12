@@ -12,10 +12,12 @@ TEST_PROGRAM_NAME     := rv32mi-p-breakpoint
 TEST_PROGRAM     := ${BUILD_DIR}/test_compiled/${TEST_PROGRAM_NAME}
 
 DUMMY_TEST_PROGRAM     := ${BUILD_DIR}/dummy_test/dummy_test
+DEBUG_TRACE := 0
 
 SIM_TOOL          := verilator4
 
 DUMPWAVE     := 1
+
 
 CORE        := e203
 CFG         := ${CORE}_config
@@ -71,7 +73,7 @@ e203:
 	@ln -s ${SIM_ROOT_DIR}/deps/Verilog/Makefile ${BUILD_DIR}/Makefile
 	@rm -rf ${BUILD_DIR}/e203_src_tmp
 	@cp -rf ${E203_SRC}/${SOC} ${BUILD_DIR}/e203_src_tmp
-	@cp -rf ${E203_SRC}/dpi/ ${BUILD_DIR}/e203_src_tmp
+	@cp -rf ${E203_SRC}/jtag_vpi/ ${BUILD_DIR}/e203_src_tmp
 	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} BUILD_DIR=${BUILD_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} -C ${BUILD_DIR}
 
 
@@ -125,8 +127,8 @@ debug_env:
 	$(eval PROGRAM_NAME := dummy_test)
 debug_sim: debug_env compile_c
 	@cp -rf ${E203_SRC}/${SOC} ${BUILD_DIR}/e203_src_tmp
-	@cp -rf ${E203_SRC}/dpi ${BUILD_DIR}/e203_src_tmp
-	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
+	@cp -rf ${E203_SRC}/jtag_vpi ${BUILD_DIR}/e203_src_tmp
+	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DEBUG_TRACE=${DEBUG_TRACE} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}
 
 debug_openocd: 
 	make debug_openocd SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR}

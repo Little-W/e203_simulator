@@ -18,7 +18,7 @@ GATE_NOTIME     := 0
 
 VSRC_DIR     := ${BUILD_DIR}/e203_src_tmp/rtl
 VTB_DIR      := ${BUILD_DIR}/e203_src_tmp/tb
-JTAG_DIR 	 := ${BUILD_DIR}/e203_src_tmp/dpi
+JTAG_DIR 	 := ${BUILD_DIR}/e203_src_tmp/jtag_vpi
 TEST_NAME     := $(notdir $(patsubst %.dump,%,${TEST_PROGRAM}))
 SIM_OUT_DIR     := sim_out
 TEST_RUNDIR := test_out
@@ -31,7 +31,9 @@ SIM_TOOL      := verilator4
 TRUE_SIM_TOOL := $(shell echo ${SIM_TOOL} | grep -o '[^0-9]*')
 IVERILOG_DIR := ${SIM_ROOT_DIR}/deps/Verilog/iverilog/bin
 VERILATOR_DIR :=  ${SIM_ROOT_DIR}/deps/Verilog/${SIM_TOOL}/bin
+VERILATOR_ROOT :=  ${SIM_ROOT_DIR}/deps/Verilog/${SIM_TOOL}/share/verilator/
 
+DEBUG_TRACE := 0
 
 #To-ADD: to add the simulatoin tool options
 ifeq ($(TRUE_SIM_TOOL),verilator)
@@ -47,7 +49,7 @@ SIM_OPTIONS   += --no-timing
 endif
 SIM_OPTIONS_BACK := --top-module tb_top --exe -DE203_XLEN=32 -DDISABLE_SV_ASSERTION=1
 VTB_DIR      := ${BUILD_DIR}/e203_src_tmp/tb_verilator
-TB_CC_FILE := ${VTB_DIR}/tb_top.cc
+VERILATOR_CC_FILE := ${VTB_DIR}/tb_top.cc
 endif
 
 ifeq ($(TRUE_SIM_TOOL),vcs)
@@ -121,7 +123,11 @@ VERILATOR_COMPILE_CMD := make -f Vtb_top.mk -C ${VERILATOR_BUILD_DIR} -j4
 endif
 SIM_EXEC := ${E203_EXEC_DIR}/Vtb_top
 SIM_CMD := ${SIM_EXEC}  -t +itcm_init=${PROGRAM}
+ifeq ($(DEBUG_TRACE),1)
+DEBUG_CMD := ${SIM_EXEC} -t +itcm_init=${PROGRAM}
+else
 DEBUG_CMD := ${SIM_EXEC} +itcm_init=${PROGRAM}
+endif
 ifeq ($(TEST_ALL),0)
 TEST_CMD := ${SIM_EXEC}  -t +itcm_init=${TEST_PROGRAM} | tee ${TEST_NAME}.log
 else
@@ -220,12 +226,11 @@ endif
 all: run
 
 compile.flg: ${RTL_V_FILES} ${TB_V_FILES}
-	echo ${TRUE_SIM_TOOL}
 	@-rm -rf compile.flg
 	@rm -rf ${E203_EXEC_DIR}
 	@mkdir -p ${E203_EXEC_DIR}
 	@sed -i '1i\`define ${SIM_TOOL}\'  ${VTB_DIR}/tb_top.v
-	${SIM_TOOL_EXEC} ${SIM_OPTIONS}  ${RTL_V_FILES} ${TB_V_FILES} ${TB_CC_FILE} ${SIM_OPTIONS_BACK}
+	${SIM_TOOL_EXEC} ${SIM_OPTIONS}  ${RTL_V_FILES} ${TB_V_FILES} ${VERILATOR_CC_FILE} ${SIM_OPTIONS_BACK}
 	${VERILATOR_COMPILE_CMD}
 	${EXEC_POST_PROC}
 	@touch compile.flg
@@ -253,12 +258,14 @@ test: compile
 	fi
 
 debug_env:
-	$(eval SIM_OPTIONS  += +incdir+${JTAG_DIR}/common/tcp_server -CFLAGS -I${JTAG_DIR}/common/tcp_server)
-	$(eval SIM_OPTIONS  += +incdir+${JTAG_DIR}/dpi/jtagdpi -CFLAGS -I${JTAG_DIR}/jtagdpi)
-	$(eval TB_CC_FILE  += ${JTAG_DIR}/common/tcp_server/tcp_server.c)
-	$(eval TB_CC_FILE  += ${JTAG_DIR}/jtagdpi/jtagdpi.c)
-	$(eval RTL_V_FILES  += ${JTAG_DIR}/jtagdpi/jtagdpi.sv)
-	$(eval SIM_OPTIONS_BACK  += -DJTAGDPI=1 -DE203_CFG_ITCM_ADDR_WIDTH=20)
+	$(eval SIM_OPTIONS  += +incdir+${JTAG_DIR} -CFLAGS -I${JTAG_DIR})
+	$(eval SIM_OPTIONS  += -CFLAGS -I${VERILATOR_ROOT}/include/)
+	$(eval SIM_OPTIONS  += -CFLAGS -I${VERILATOR_ROOT}/include/vltstd/)
+	$(eval VERILATOR_CC_FILE  += ${JTAG_DIR}/jtag_common.c)
+	$(eval VERILATOR_CC_FILE  += ${JTAG_DIR}/jtagServer.cpp)
+	$(eval VERILATOR_CC_FILE  += ${VERILATOR_ROOT}/include/verilated.cpp)
+	$(eval VERILATOR_CC_FILE  += ${VERILATOR_ROOT}/include/verilated_vcd_c.cpp)
+	$(eval SIM_OPTIONS_BACK  += -DJTAGVPI=1 -CFLAGS -DJTAGVPI=1)
 
 
 debug_sim: debug_env compile
@@ -270,7 +277,7 @@ debug_openocd:
 	${OPENOCD} -s ${JTAG_DIR} -f hbird-e203.cfg
 
 debug_gdb: 
-	${GDB} -ex "set remotetimeout 2000" -ex "target extended-remote localhost:3333"  -ex "info reg" ${PROGRAM}
+	${GDB} -ex "set remotetimeout 2000" -ex "target extended-remote localhost:3333"  -ex "info reg" ${PROGRAM}.elf
 
 .PHONY: run 
 
