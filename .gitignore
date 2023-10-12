@@ -3,7 +3,10 @@ csrc/*.o.*
 *.o
 *.o.*
 build
-deps/C/gcc
+deps/C/gcc*
 deps/C/openocd
 deps/C/qemu
 deps/Verilog/iverilog
+deps/Verilog/verilator*
+.*
+*.tar*
