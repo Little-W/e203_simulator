@@ -113,7 +113,7 @@ test_all: e203
 	else	\
 		$(foreach tst,$(SELF_TESTS), make test DUMPWAVE=0 TEST_PROGRAM=${tst} TEST_ALL=1 SIM_TOOL=${SIM_TOOL} BUILD_DIR=${BUILD_DIR} -C ${BUILD_DIR};)\
 		rm -rf ${BUILD_DIR}/regress.res ;\
-		find ${BUILD_DIR}/test_out/ -name "rv${XLEN}*.log" -exec ${SIM_ROOT_DIR}/deps/C/tools/find_test_fail.csh {} >> ${BUILD_DIR}/regress.res \;; cat ${BUILD_DIR}/regress.res ;	\
+		find ${BUILD_DIR}/test_out/ -name "rv${XLEN}*.log" -exec ${SIM_ROOT_DIR}/deps/tools/find_test_fail.csh {} >> ${BUILD_DIR}/regress.res \;; cat ${BUILD_DIR}/regress.res ;	\
 	fi
 
 debug_env:

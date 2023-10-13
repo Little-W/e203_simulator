@@ -92,21 +92,29 @@ ifeq ($(wildcard $(VERILATOR_DIR)),)
 	ifeq ($(SIM_TOOL),verilator4)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-4.228.tar.xz)
 		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv x86_64_verilator-4.228.tar.xz ../deps/Verilog/$(SIM_TOOL) && cd ../deps/Verilog/$(SIM_TOOL) && tar -xvf x86_64_verilator-4.228.tar.xz && rm x86_64_verilator-4.228.tar.xz)
+		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv x86_64_verilator-4.228.tar.xz ../deps/Verilog/$(SIM_TOOL))
+		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf x86_64_verilator-4.228.tar.xz && rm x86_64_verilator-4.228.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	else
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-5.016.tar.xz)
 		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv x86_64_verilator-5.016.tar.xz ../deps/Verilog/$(SIM_TOOL) && cd ../deps/Verilog/$(SIM_TOOL) && tar -xvf x86_64_verilator-5.016.tar.xz && rm x86_64_verilator-5.016.tar.xz)
+		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv x86_64_verilator-5.016.tar.xz ../deps/Verilog/$(SIM_TOOL))
+		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf x86_64_verilator-5.016.tar.xz && rm x86_64_verilator-5.016.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	endif
 	else ifeq ($(ARCH),aarch64)
 	ifeq ($(SIM_TOOL),verilator4)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-4.228.tar.xz)
 		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv arm64_verilator-4.228.tar.xz ../deps/Verilog/$(SIM_TOOL) && cd ../deps/Verilog/$(SIM_TOOL) && tar -xvf arm64_verilator-4.228.tar.xz && rm arm64_verilator-4.228.tar.xz)
+		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv arm64_verilator-4.228.tar.xz ../deps/Verilog/$(SIM_TOOL))
+		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf arm64_verilator-4.228.tar.xz && rm arm64_verilator-4.228.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	else
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-5.016.tar.xz)
 		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv arm64_verilator-5.016.tar.xz ../deps/Verilog/$(SIM_TOOL) && cd ../deps/Verilog/$(SIM_TOOL) && tar -xvf arm64_verilator-5.016.tar.xz && rm arm64_verilator-5.016.tar.xz)
+		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv arm64_verilator-5.016.tar.xz ../deps/Verilog/$(SIM_TOOL))
+		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf arm64_verilator-5.016.tar.xz && rm arm64_verilator-5.016.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	endif
 	else
 		$(error Unsupported architecture: $(ARCH))
@@ -259,12 +267,8 @@ test: compile
 
 debug_env:
 	$(eval SIM_OPTIONS  += +incdir+${JTAG_DIR} -CFLAGS -I${JTAG_DIR})
-	$(eval SIM_OPTIONS  += -CFLAGS -I${VERILATOR_ROOT}/include/)
-	$(eval SIM_OPTIONS  += -CFLAGS -I${VERILATOR_ROOT}/include/vltstd/)
 	$(eval VERILATOR_CC_FILE  += ${JTAG_DIR}/jtag_common.c)
 	$(eval VERILATOR_CC_FILE  += ${JTAG_DIR}/jtagServer.cpp)
-	$(eval VERILATOR_CC_FILE  += ${VERILATOR_ROOT}/include/verilated.cpp)
-	$(eval VERILATOR_CC_FILE  += ${VERILATOR_ROOT}/include/verilated_vcd_c.cpp)
 	$(eval SIM_OPTIONS_BACK  += -DJTAGVPI=1 -CFLAGS -DJTAGVPI=1)
 
 
