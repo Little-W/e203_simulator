@@ -1,13 +1,4 @@
-include ${SIM_ROOT_DIR}/deps/C/makefiles/Makefile.conf
-ARCH := $(shell uname -m)
-
-RUN_DIR      := ${PWD}
-BUILD_DIR      := ${PWD}/build
-PROGRAM_NAME     := main
-PROGRAM     := ${BUILD_DIR}/c_compiled/${PROGRAM_NAME}
-
-TEST_PROGRAM_NAME     := rv32mi-p-breakpoint
-TEST_PROGRAM     := ${BUILD_DIR}/test_compiled/${TEST_PROGRAM_NAME}
+include $(SIM_ROOT_DIR)/make.conf
 
 DUMPWAVE     := 1
 TEST_ALL := 0
@@ -15,25 +6,17 @@ SMIC130LL    := 0
 GATE_SIM     := 0
 GATE_SDF     := 0
 GATE_NOTIME     := 0
-
-VSRC_DIR     := ${BUILD_DIR}/e203_src_tmp/rtl
-VTB_DIR      := ${BUILD_DIR}/e203_src_tmp/tb
-JTAG_DIR 	 := ${BUILD_DIR}/e203_src_tmp/jtag_vpi
+VSRC_DIR     := ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/rtl
+VTB_DIR      := ${BUILD_DIR}/${CORE}_tb/tb
+JTAG_DIR 	 := ${HARDWARE_SRC_DIR}/${CORE}/jtag_vpi
 TEST_NAME     := $(notdir $(patsubst %.dump,%,${TEST_PROGRAM}))
-SIM_OUT_DIR     := sim_out
-TEST_RUNDIR := test_out
 
-
-# The following portion is depending on the EDA tools you are using, Please add them by yourself according to your EDA vendors
-#To-ADD: to add the simulatoin tool
-#SIM_TOOL      := vcs
-SIM_TOOL      := verilator5
 TRUE_SIM_TOOL := $(shell echo ${SIM_TOOL} | grep -o '[^0-9]*')
-IVERILOG_DIR := ${SIM_ROOT_DIR}/deps/Verilog/iverilog/bin
-VERILATOR_DIR :=  ${SIM_ROOT_DIR}/deps/Verilog/${SIM_TOOL}/bin
-VERILATOR_ROOT :=  ${SIM_ROOT_DIR}/deps/Verilog/${SIM_TOOL}/share/verilator/
+IVERILOG_DIR := ${HARDWARE_TOOLS_DIR}/iverilog/bin
+VERILATOR_DIR :=  ${HARDWARE_TOOLS_DIR}/${SIM_TOOL}/bin
+VERILATOR_ROOT :=  ${HARDWARE_TOOLS_DIR}/${SIM_TOOL}/share/verilator/
 
-DEBUG_TRACE := 0
+
 
 #To-ADD: to add the simulatoin tool options
 ifeq ($(TRUE_SIM_TOOL),verilator)
@@ -48,7 +31,7 @@ ifeq ($(SIM_TOOL),verilator5)
 SIM_OPTIONS   += --no-timing
 endif
 SIM_OPTIONS_BACK := --top-module tb_top --exe -DE203_XLEN=32 -DDISABLE_SV_ASSERTION=1
-VTB_DIR      := ${BUILD_DIR}/e203_src_tmp/tb_verilator
+VTB_DIR      := ${BUILD_DIR}/${CORE}_tb/tb_verilator
 VERILATOR_CC_FILE := ${VTB_DIR}/tb_top.cc
 endif
 
@@ -59,7 +42,6 @@ endif
 ifeq ($(TRUE_SIM_TOOL),iverilog)
 SIM_OPTIONS   := -o vvp.exec -I "${VSRC_DIR}/core/" -I "${VSRC_DIR}/perips/" -I "${VSRC_DIR}/perips/apb_i2c/" -D DISABLE_SV_ASSERTION=1 -g2005-sv
 endif
-
 
 RTL_V_FILES		:= $(wildcard ${VSRC_DIR}/*/*.v ${VSRC_DIR}/*/*/*.v)
 TB_V_FILES		:= $(wildcard ${VTB_DIR}/*.v)
@@ -86,43 +68,43 @@ endif
 #To-ADD: to add the simulatoin executable
 ifeq ($(TRUE_SIM_TOOL),verilator)
 
-ifeq ($(wildcard $(VERILATOR_DIR)),)
 
+
+ifeq ($(wildcard $(VERILATOR_DIR)),)
 	ifeq ($(ARCH),x86_64)
 	ifeq ($(SIM_TOOL),verilator4)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-4.228.tar.xz)
-		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv x86_64_verilator-4.228.tar.xz ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf x86_64_verilator-4.228.tar.xz && rm x86_64_verilator-4.228.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv x86_64_verilator-4.228.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf x86_64_verilator-4.228.tar.xz && rm x86_64_verilator-4.228.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	else
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-5.016.tar.xz)
-		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv x86_64_verilator-5.016.tar.xz ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf x86_64_verilator-5.016.tar.xz && rm x86_64_verilator-5.016.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv x86_64_verilator-5.016.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf x86_64_verilator-5.016.tar.xz && rm x86_64_verilator-5.016.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	endif
 	else ifeq ($(ARCH),aarch64)
 	ifeq ($(SIM_TOOL),verilator4)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-4.228.tar.xz)
-		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv arm64_verilator-4.228.tar.xz ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf arm64_verilator-4.228.tar.xz && rm arm64_verilator-4.228.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv arm64_verilator-4.228.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf arm64_verilator-4.228.tar.xz && rm arm64_verilator-4.228.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	else
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-5.016.tar.xz)
-		shell := $(shell rm -rf ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell mkdir -p ../deps/Verilog/$(SIM_TOOL) && mv arm64_verilator-5.016.tar.xz ../deps/Verilog/$(SIM_TOOL))
-		shell := $(shell cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && tar -xvf arm64_verilator-5.016.tar.xz && rm arm64_verilator-5.016.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && cd ${SIM_ROOT_DIR}/deps/Verilog/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv arm64_verilator-5.016.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf arm64_verilator-5.016.tar.xz && rm arm64_verilator-5.016.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
 	endif
 	else
 		$(error Unsupported architecture: $(ARCH))
 	endif
-
 endif
 
-SIM_TOOL_EXEC      := ${VERILATOR_DIR}/verilator
+SIM_TOOL_EXEC  := ${VERILATOR_DIR}/verilator
 E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_verilator
 ifeq ($(ARCH),x86_64)
 VERILATOR_COMPILE_CMD := make -f Vtb_top.mk -C ${VERILATOR_BUILD_DIR} -j$(nproc)
@@ -130,13 +112,19 @@ else ifeq ($(ARCH),aarch64)
 VERILATOR_COMPILE_CMD := make -f Vtb_top.mk -C ${VERILATOR_BUILD_DIR} -j4
 endif
 SIM_EXEC := ${E203_EXEC_DIR}/Vtb_top
+
+ifeq ($(DUMPWAVE),1)
 SIM_CMD := ${SIM_EXEC}  -t +itcm_init=${PROGRAM}
-ifeq ($(DEBUG_TRACE),1)
-DEBUG_CMD := ${SIM_EXEC} -t +itcm_init=${PROGRAM}
 else
-DEBUG_CMD := ${SIM_EXEC} +itcm_init=${PROGRAM}
+SIM_CMD := ${SIM_EXEC}  +itcm_init=${PROGRAM}
 endif
-ifeq ($(TEST_ALL),0)
+ifeq ($(DUMPWAVE),1)
+DEBUG_CMD := ${SIM_EXEC}  -t +itcm_init=${PROGRAM}
+else
+DEBUG_CMD := ${SIM_EXEC}  +itcm_init=${PROGRAM}
+endif
+
+ifeq ($(DUMPWAVE),1)
 TEST_CMD := ${SIM_EXEC}  -t +itcm_init=${TEST_PROGRAM} | tee ${TEST_NAME}.log
 else
 TEST_CMD := ${SIM_EXEC} +itcm_init=${TEST_PROGRAM} | tee ${TEST_NAME}.log
@@ -147,7 +135,7 @@ EXEC_POST_PROC := @cp -f ${BUILD_DIR}/verilator_build/Vtb_top ${E203_EXEC_DIR}
 endif
 
 ifeq ($(TRUE_SIM_TOOL),vcs)
-SIM_EXEC      := ${RUN_DIR}/simv +ntb_random_seed_automatic
+SIM_EXEC      := ${VCS_DIR}/simv +ntb_random_seed_automatic
 E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_iverilog
 endif
 ifeq ($(TRUE_SIM_TOOL),iverilog)
@@ -162,12 +150,12 @@ ifeq ($(wildcard $(IVERILOG_DIR)),)
 
 	ifeq ($(ARCH),x86_64)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/iverilog12.0_x86_64.tar.xz)
-		shell := $(shell rm -rf ../deps/Verilog/iverilog)
-		shell := $(shell mkdir -p ../deps/Verilog/iverilog && mv iverilog12.0_x86_64.tar.xz ../deps/Verilog/iverilog && cd ../deps/Verilog/iverilog && tar -xvf iverilog12.0_x86_64.tar.xz && rm iverilog12.0_x86_64.tar.xz)
+		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv iverilog12.0_x86_64.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf iverilog12.0_x86_64.tar.xz && rm iverilog12.0_x86_64.tar.xz)
 	else ifeq ($(ARCH),aarch64)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/iverilog12.0_arm64.tar.xz)
-		shell := $(shell rm -rf ../deps/Verilog/iverilog)
-		shell := $(shell mkdir -p ../deps/Verilog/iverilog && mv iverilog12.0_arm64.tar.xz ../deps/Verilog/iverilog && cd ../deps/Verilog/iverilog && tar -xvf iverilog12.0_arm64.tar.xz && rm iverilog12.0_arm64.tar.xz)
+		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
+		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv iverilog12.0_arm64.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf iverilog12.0_arm64.tar.xz && rm iverilog12.0_arm64.tar.xz)
 	else
 		$(error Unsupported architecture: $(ARCH))
 	endif
@@ -259,8 +247,9 @@ test: compile
 	then 	\
 		mkdir ${TEST_RUNDIR} ;	\
 	fi
+	echo ${TEST_CMD}
 	cd ${TEST_RUNDIR};${TEST_CMD}
-	@if [ ${TEST_ALL} -eq 0 ];	\
+	@if [ ${DUMPWAVE} -eq 1 ];	\
 	then	\
 		gvim -p ${TEST_PROGRAM}.dump & ${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${TEST_WAV_FILE} &   \
 	fi
@@ -280,7 +269,7 @@ debug_sim: debug_env compile
 debug_openocd: 
 	${OPENOCD} -s ${JTAG_DIR} -f hbird-e203.cfg
 
-debug_gdb: 
+debug_gdb:
 	${GDB} -ex "set remotetimeout 2000" -ex "target extended-remote localhost:3333"  -ex "info reg" ${PROGRAM}.elf
 
 .PHONY: run 

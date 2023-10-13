@@ -19,7 +19,7 @@ endif
 
 # Set RISCV_ARCH and RISCV_ABI
 CORE_UPPER := $(call uc, $(CORE))
-include $(HBIRD_SDK_BUILD)/Makefile.core
+include $(SOTFWARE_MAKEFILES_DIR)/Makefile.core
 # you can override SUPPORTED_CORES defined in Makefile.core to limit the COREs used in this SoC
 # eg. override SUPPORTED_CORES := n305 n307
 
