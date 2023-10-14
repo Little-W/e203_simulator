@@ -13,9 +13,6 @@ TEST_NAME     := $(notdir $(patsubst %.dump,%,${TEST_PROGRAM}))
 
 TRUE_SIM_TOOL := $(shell echo ${SIM_TOOL} | grep -o '[^0-9]*')
 
-
-
-
 #To-ADD: to add the simulatoin tool options
 ifeq ($(TRUE_SIM_TOOL),verilator)
 VERILATOR_BUILD_DIR := ${BUILD_DIR}/verilator_build
@@ -71,12 +68,14 @@ ifeq ($(TRUE_SIM_TOOL),verilator)
 ifeq ($(wildcard $(VERILATOR_BIN_DIR)),)
 	ifeq ($(ARCH),x86_64)
 	ifeq ($(SIM_TOOL),verilator4)
+		shell := $(shell  rm x86_64_verilator-4.228.tar.xz)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-4.228.tar.xz || rm x86_64_verilator-4.228.tar.xz)
 		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
 		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv x86_64_verilator-4.228.tar.xz $(VERILATOR_ROOT_DIR))
 		shell := $(shell cd $(VERILATOR_ROOT_DIR) && tar -xvf x86_64_verilator-4.228.tar.xz && rm x86_64_verilator-4.228.tar.xz)
 		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(VERILATOR_ROOT_DIR) && cd $(VERILATOR_ROOT_DIR) && sh update_pkgconfig.sh)
 	else
+		shell := $(shell rm x86_64_verilator-5.016.tar.xz)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-5.016.tar.xz || rm x86_64_verilator-5.016.tar.xz)
 		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
 		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv x86_64_verilator-5.016.tar.xz $(VERILATOR_ROOT_DIR))
@@ -85,12 +84,14 @@ ifeq ($(wildcard $(VERILATOR_BIN_DIR)),)
 	endif
 	else ifeq ($(ARCH),aarch64)
 	ifeq ($(SIM_TOOL),verilator4)
+		shell := $(shell rm arm64_verilator-4.228.tar.xz)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-4.228.tar.xz || rm arm64_verilator-4.228.tar.xz)
 		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
 		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv arm64_verilator-4.228.tar.xz $(VERILATOR_ROOT_DIR))
 		shell := $(shell cd $(VERILATOR_ROOT_DIR) && tar -xvf arm64_verilator-4.228.tar.xz && rm arm64_verilator-4.228.tar.xz)
 		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(VERILATOR_ROOT_DIR) && cd $(VERILATOR_ROOT_DIR) && sh update_pkgconfig.sh)
 	else
+		shell := $(shell rm arm64_verilator-5.016.tar.xz)
 		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-5.016.tar.xz || rm arm64_verilator-5.016.tar.xz)
 		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
 		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv arm64_verilator-5.016.tar.xz $(VERILATOR_ROOT_DIR))
@@ -147,21 +148,20 @@ EXEC_POST_PROC := @cp -f ${BUILD_DIR}/vvp.exec ${E203_EXEC_DIR}
 ifeq ($(wildcard $(IVERILOG_DIR)),)
 
 	ifeq ($(ARCH),x86_64)
-		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/iverilog12.0_x86_64.tar.xz)
+		shell := $(shell rm iverilog12.0_x86_64.tar.xz)
+		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/iverilog12.0_x86_64.tar.xz || rm iverilog12.0_x86_64.tar.xz)
 		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
 		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv iverilog12.0_x86_64.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf iverilog12.0_x86_64.tar.xz && rm iverilog12.0_x86_64.tar.xz)
 	else ifeq ($(ARCH),aarch64)
-		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/iverilog12.0_arm64.tar.xz)
+		shell := $(shell rm iverilog12.0_arm64.tar.xz)
+		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/iverilog12.0_arm64.tar.xz || rm iverilog12.0_arm64.tar.xz)
 		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
 		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv iverilog12.0_arm64.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf iverilog12.0_arm64.tar.xz && rm iverilog12.0_arm64.tar.xz)
 	else
 		$(error Unsupported architecture: $(ARCH))
 	endif
-
 endif
-
 endif
-
 
 #To-ADD: to add the waveform toolSIM_TOOL_EXEC
 ifeq ($(TRUE_SIM_TOOL),vcs)
