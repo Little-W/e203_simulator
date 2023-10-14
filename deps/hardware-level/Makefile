@@ -219,18 +219,23 @@ endif
 
 all: run
 
-compile: ${RTL_V_FILES} ${TB_V_FILES}
+compile.flg: ${RTL_V_FILES} ${TB_V_FILES}
+	@-rm -rf compile.flg
 	@rm -rf ${E203_EXEC_DIR}
 	@mkdir -p ${E203_EXEC_DIR}
 	@sed -i '1i\`define ${SIM_TOOL}\'  ${VTB_DIR}/tb_top.v
 	${SIM_TOOL_EXEC} ${SIM_OPTIONS}  ${RTL_V_FILES} ${TB_V_FILES} ${VERILATOR_CC_FILE} ${SIM_OPTIONS_BACK}
 	${VERILATOR_COMPILE_CMD}
 	${EXEC_POST_PROC}
+	@touch compile.flg
+
+compile: compile.flg
+
 wave:
 	gvim -p ${PROGRAM}.dump &
 	${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${SIM_WAV_FILE}  &
 
-run: 
+run:
 	@rm -rf ${SIM_OUT_DIR}
 	@mkdir ${SIM_OUT_DIR}
 	@cd ${SIM_OUT_DIR};${SIM_CMD}
@@ -263,7 +268,7 @@ debug_openocd:
 	${OPENOCD} -s ${JTAG_DIR} -f hbird-e203.cfg
 
 debug_gdb:
-	${GDB} -ex "set remotetimeout 2000" -ex "target extended-remote localhost:3333"  -ex "info reg" ${PROGRAM}.elf
+	${GDB} -ex "set remotetimeout 14000" -ex "target extended-remote localhost:3333"  -ex "info reg" ${PROGRAM}.elf
 
 .PHONY: run 
 

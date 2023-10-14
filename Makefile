@@ -17,35 +17,54 @@ BENCHMARK_TESTS := $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/benchmark_compile
 
 compile_c:
 	@mkdir -p ${C_BUILD_DIR}
-	@rm -f $(C_BUILD_DIR)/Makefile
-	@ln -s $(SOTFWARE_MAKEFILES_DIR)/Makefile ${C_BUILD_DIR}
+	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
+	then \
+	rm -f ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	fi
 	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} TARGET=${TARGET} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 bin:
 	@mkdir -p ${C_BUILD_DIR}
-	@rm -f $(C_BUILD_DIR)/Makefile
-	@ln -s $(SOTFWARE_MAKEFILES_DIR)/Makefile ${C_BUILD_DIR}
+	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
+	then \
+	rm -f ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	fi
 	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 qemu:
 	@mkdir -p ${C_BUILD_DIR}
-	@rm -f $(C_BUILD_DIR)/Makefile
-	@ln -s $(SOTFWARE_MAKEFILES_DIR)/Makefile ${C_BUILD_DIR}
+	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
+	then \
+	rm -f ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	fi
 	make qemu USE_HBIRD_SDK=0 SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	
 asm:
 	@mkdir -p ${C_BUILD_DIR}
-	@rm -f $(C_BUILD_DIR)/Makefile
-	@ln -s $(SOTFWARE_MAKEFILES_DIR)/Makefile ${C_BUILD_DIR}
+	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
+	then \
+	rm -f ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	fi
 	make asm USE_HB_SDK=0 SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	@mv $(C_SRC_DIR)/*.S* $(C_BUILD_DIR)
 
 e203:
 	@mkdir -p ${BUILD_DIR}
-	@rm -f ${BUILD_DIR}/Makefile
-	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator
+	@if [ ! -h ${BUILD_DIR}/Makefile ] ; \
+	then \
+	rm -f ${BUILD_DIR}/Makefile; \
+	ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile; \
+	fi
+	@if [ ! -d ${BUILD_DIR}/${CORE}_tb/ ] ; \
+	then	\
+	mkdir -p ${BUILD_DIR}/${CORE}_tb/; \
+	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb; \
+	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator; \
+	fi
 	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} -C ${BUILD_DIR}
 
 
@@ -72,7 +91,10 @@ test: e203
 	fi
 
 compile_test_src:
-	make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${ISA_TEST_DIR}/test_src/
+	@if [ ! -e ${TEST_PROGRAM} ] ; \
+	then	\
+		make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${ISA_TEST_DIR}/test_src/;	\
+	fi
 
 run_benchmarks: e203
 	if [ ! -e ${BUILD_DIR}/benchmark_compiled ] ; \
@@ -89,7 +111,7 @@ compile_benchmark_src:
 	make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${RISCV_BENCHMARK_DIR}
 
 test_all: e203
-	if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
+	@if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
 	then	\
 		echo -e "\n" ;	\
 		echo "****************************************" ;	\
@@ -107,9 +129,12 @@ debug_env: compile_c
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
 	
 debug_sim: debug_env compile_c
-	@mkdir -p ${BUILD_DIR}/${CORE}_tb/
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator
+	@if [ ! -d ${BUILD_DIR}/${CORE}_tb/ ] ; \
+	then	\
+	mkdir -p ${BUILD_DIR}/${CORE}_tb/; \
+	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb; \
+	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator; \
+	fi
 	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 debug_openocd: 
