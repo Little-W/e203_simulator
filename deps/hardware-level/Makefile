@@ -12,9 +12,7 @@ JTAG_DIR 	 := ${HARDWARE_SRC_DIR}/${CORE}/jtag_vpi
 TEST_NAME     := $(notdir $(patsubst %.dump,%,${TEST_PROGRAM}))
 
 TRUE_SIM_TOOL := $(shell echo ${SIM_TOOL} | grep -o '[^0-9]*')
-IVERILOG_DIR := ${HARDWARE_TOOLS_DIR}/iverilog/bin
-VERILATOR_DIR :=  ${HARDWARE_TOOLS_DIR}/${SIM_TOOL}/bin
-VERILATOR_ROOT :=  ${HARDWARE_TOOLS_DIR}/${SIM_TOOL}/share/verilator/
+
 
 
 
@@ -70,41 +68,41 @@ ifeq ($(TRUE_SIM_TOOL),verilator)
 
 
 
-ifeq ($(wildcard $(VERILATOR_DIR)),)
+ifeq ($(wildcard $(VERILATOR_BIN_DIR)),)
 	ifeq ($(ARCH),x86_64)
 	ifeq ($(SIM_TOOL),verilator4)
-		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-4.228.tar.xz)
-		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv x86_64_verilator-4.228.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf x86_64_verilator-4.228.tar.xz && rm x86_64_verilator-4.228.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-4.228.tar.xz || rm x86_64_verilator-4.228.tar.xz)
+		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
+		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv x86_64_verilator-4.228.tar.xz $(VERILATOR_ROOT_DIR))
+		shell := $(shell cd $(VERILATOR_ROOT_DIR) && tar -xvf x86_64_verilator-4.228.tar.xz && rm x86_64_verilator-4.228.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(VERILATOR_ROOT_DIR) && cd $(VERILATOR_ROOT_DIR) && sh update_pkgconfig.sh)
 	else
-		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-5.016.tar.xz)
-		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv x86_64_verilator-5.016.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf x86_64_verilator-5.016.tar.xz && rm x86_64_verilator-5.016.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/x86_64_verilator-5.016.tar.xz || rm x86_64_verilator-5.016.tar.xz)
+		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
+		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv x86_64_verilator-5.016.tar.xz $(VERILATOR_ROOT_DIR))
+		shell := $(shell cd $(VERILATOR_ROOT_DIR) && tar -xvf x86_64_verilator-5.016.tar.xz && rm x86_64_verilator-5.016.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(VERILATOR_ROOT_DIR) && cd $(VERILATOR_ROOT_DIR) && sh update_pkgconfig.sh)
 	endif
 	else ifeq ($(ARCH),aarch64)
 	ifeq ($(SIM_TOOL),verilator4)
-		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-4.228.tar.xz)
-		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv arm64_verilator-4.228.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf arm64_verilator-4.228.tar.xz && rm arm64_verilator-4.228.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-4.228.tar.xz || rm arm64_verilator-4.228.tar.xz)
+		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
+		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv arm64_verilator-4.228.tar.xz $(VERILATOR_ROOT_DIR))
+		shell := $(shell cd $(VERILATOR_ROOT_DIR) && tar -xvf arm64_verilator-4.228.tar.xz && rm arm64_verilator-4.228.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(VERILATOR_ROOT_DIR) && cd $(VERILATOR_ROOT_DIR) && sh update_pkgconfig.sh)
 	else
-		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-5.016.tar.xz)
-		shell := $(shell rm -rf $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell mkdir -p $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && mv arm64_verilator-5.016.tar.xz $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL))
-		shell := $(shell cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && tar -xvf arm64_verilator-5.016.tar.xz && rm arm64_verilator-5.016.tar.xz)
-		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && cd $(HARDWARE_TOOLS_DIR)/$(SIM_TOOL) && sh update_pkgconfig.sh)
+		shell := $(shell wget https://bitbucket.org/little-w/e203_simulator/downloads/arm64_verilator-5.016.tar.xz || rm arm64_verilator-5.016.tar.xz)
+		shell := $(shell rm -rf $(VERILATOR_ROOT_DIR))
+		shell := $(shell sudo mkdir -p $(VERILATOR_ROOT_DIR) && sudo chmod 777 $(VERILATOR_ROOT_DIR) && mv arm64_verilator-5.016.tar.xz $(VERILATOR_ROOT_DIR))
+		shell := $(shell cd $(VERILATOR_ROOT_DIR) && tar -xvf arm64_verilator-5.016.tar.xz && rm arm64_verilator-5.016.tar.xz)
+		shell := $(shell cp -f ${SIM_ROOT_DIR}/deps/tools/update_pkgconfig.sh $(VERILATOR_ROOT_DIR) && cd $(VERILATOR_ROOT_DIR) && sh update_pkgconfig.sh)
 	endif
 	else
 		$(error Unsupported architecture: $(ARCH))
 	endif
 endif
 
-SIM_TOOL_EXEC  := ${VERILATOR_DIR}/verilator
+SIM_TOOL_EXEC  := ${VERILATOR_ROOT_DIR}/bin/verilator
 E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_verilator
 ifeq ($(ARCH),x86_64)
 VERILATOR_COMPILE_CMD := make -f Vtb_top.mk -C ${VERILATOR_BUILD_DIR} -j$(nproc)
