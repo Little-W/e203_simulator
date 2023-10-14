@@ -103,19 +103,13 @@ test_all: e203
 	fi
 
 debug_env: compile_c
-	@mkdir -p ${BUILD_DIR}/dummy_test
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
-	@cp -f ${SOTFWARE_TEST_DIR}/debug/dummy_test.c ${BUILD_DIR}/dummy_test
-	$(eval C_SRC_DIR = ${BUILD_DIR}/dummy_test)
-	$(eval C_BUILD_DIR := ${BUILD_DIR}/dummy_test)
-	$(eval PROGRAM := DUMMY_TEST_PROGRAM)
-	$(eval TARGET := dummy_test)
 	
 debug_sim: debug_env compile_c
 	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb ${BUILD_DIR}/${CORE}_tb/
 	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/
-	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
+	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 debug_openocd: 
 	make debug_openocd SIM_ROOT_DIR=${SIM_ROOT_DIR} -C ${BUILD_DIR}
