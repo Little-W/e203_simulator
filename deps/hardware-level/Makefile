@@ -219,18 +219,13 @@ endif
 
 all: run
 
-compile.flg: ${RTL_V_FILES} ${TB_V_FILES}
-	@-rm -rf compile.flg
+compile: ${RTL_V_FILES} ${TB_V_FILES}
 	@rm -rf ${E203_EXEC_DIR}
 	@mkdir -p ${E203_EXEC_DIR}
 	@sed -i '1i\`define ${SIM_TOOL}\'  ${VTB_DIR}/tb_top.v
 	${SIM_TOOL_EXEC} ${SIM_OPTIONS}  ${RTL_V_FILES} ${TB_V_FILES} ${VERILATOR_CC_FILE} ${SIM_OPTIONS_BACK}
 	${VERILATOR_COMPILE_CMD}
 	${EXEC_POST_PROC}
-	@touch compile.flg
-
-compile: compile.flg
-
 wave:
 	gvim -p ${PROGRAM}.dump &
 	${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${SIM_WAV_FILE}  &
