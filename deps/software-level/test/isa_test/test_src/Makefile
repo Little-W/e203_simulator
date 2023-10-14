@@ -7,7 +7,6 @@ XLEN ?= 32
 include $(SIM_ROOT_DIR)/make.conf
 include $(SOTFWARE_MAKEFILES_DIR)/Makefile.env
 src_dir := $(ISA_TEST_DIR)/test_src/
-
 OUT_DIR = $(BUILD_DIR)/test_compiled
 
 include $(src_dir)/rv64ui/Makefrag
@@ -49,7 +48,7 @@ default: compile_test_src
 define compile_template
 
 $$($(1)_p_tests): $(1)-p-%: $(1)/%.S
-	$$(CC) $(2) $$(RISCV_GCC_FLAGS) -I $(ISA_TEST_DIR)/test_libs -T $(ISA_TEST_DIR)/test_libs/link.ld $$< -o $(OUT_DIR)/$$@
+	$$(CC) $(2) $$(RISCV_GCC_FLAGS) -I $(ISA_TEST_DIR)/test_libs -I $(SOTFWARE_TEST_DIR)/common_libs  -T $(ISA_TEST_DIR)/test_libs/link.ld $$< -o $(OUT_DIR)/$$@
 $(1)_tests += $$($(1)_p_tests)
 
 $(1)_tests_dump = $$(addsuffix .dump, $$($(1)_tests))

@@ -235,7 +235,7 @@ run: compile
 	@mkdir ${SIM_OUT_DIR}
 	@cd ${SIM_OUT_DIR};${SIM_CMD}
 
-test: compile
+test:
 	@if [ ! -e ${TEST_RUNDIR} ] ;	\
 	then 	\
 		mkdir ${TEST_RUNDIR} ;	\

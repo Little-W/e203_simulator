@@ -12,6 +12,7 @@ endif
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN}ui-p*.dump))
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN}mi-p*.dump))
 
+BENCHMARK_TESTS := $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/benchmark_compiled/*.dump))
 
 compile_c:
 	@mkdir -p ${C_BUILD_DIR}
@@ -73,6 +74,19 @@ test: e203
 compile_test_src:
 	make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${ISA_TEST_DIR}/test_src/
 
+run_benchmarks: e203
+	if [ ! -e ${BUILD_DIR}/benchmark_compiled ] ; \
+	then	\
+		echo -e "\n" ;	\
+		echo "****************************************" ;	\
+		echo '    do "make compile_test_src" first';	\
+		echo "****************************************" ;	\
+		echo -e "\n" ;	\
+	else	\
+		$(foreach tst,$(BENCHMARK_TESTS), make test DUMPWAVE=0 SIM_ROOT_DIR=${SIM_ROOT_DIR} TEST_PROGRAM=${tst} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR};)\
+	fi
+compile_benchmark_src:
+	make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${RISCV_BENCHMARK_DIR}
 
 test_all: e203
 	if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
@@ -136,5 +150,5 @@ clean:
 	@rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o.*
 	@echo " Clean done."
 
-.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim
+.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim compile_benchmark_src
 
