@@ -88,7 +88,7 @@ test_all: e203
 		find ${BUILD_DIR}/test_out/ -name "rv${XLEN}*.log" -exec ${SIM_ROOT_DIR}/deps/tools/find_test_fail.csh {} >> ${BUILD_DIR}/regress.res \;; cat ${BUILD_DIR}/regress.res ;	\
 	fi
 
-debug_env:
+debug_env: compile_c
 	@mkdir -p ${BUILD_DIR}/dummy_test
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
@@ -111,7 +111,7 @@ debug_gdb:
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
 	@cp -rf ${HARDWARE_SRC_DIR}/ ${BUILD_DIR}/e203_src_tmp
-	make debug_gdb SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
+	make debug_gdb SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 clean:
 	@rm -rf build
