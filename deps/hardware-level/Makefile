@@ -135,14 +135,13 @@ endif
 
 ifeq ($(TRUE_SIM_TOOL),vcs)
 SIM_EXEC      := ${VCS_DIR}/simv +ntb_random_seed_automatic
-E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_iverilog
 endif
 ifeq ($(TRUE_SIM_TOOL),iverilog)
+E203_EXEC_DIR := ${BUILD_DIR}/e203_exec_iverilog
 SIM_EXEC      := ${IVERILOG_DIR}/vvp ${E203_EXEC_DIR}/vvp.exec -lxt2
 SIM_TOOL_EXEC := ${IVERILOG_DIR}/iverilog
 SIM_CMD := ${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${PROGRAM} +SIM_TOOL=${TRUE_SIM_TOOL} 2>&1 | tee ${SIM_OUT_DIR}.log
 TEST_CMD := ${SIM_EXEC} +DUMPWAVE=${DUMPWAVE} +TESTCASE=${TEST_PROGRAM} +SIM_TOOL=${TRUE_SIM_TOOL} 2>&1 | tee ${TEST_NAME}.log
-
 EXEC_POST_PROC := @cp -f ${BUILD_DIR}/vvp.exec ${E203_EXEC_DIR}
 
 ifeq ($(wildcard $(IVERILOG_DIR)),)
