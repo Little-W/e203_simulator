@@ -1,6 +1,7 @@
 SIM_ROOT_DIR     := ${PWD}
 include $(SIM_ROOT_DIR)/make.conf
 
+DUMMY_TEST_PROGRAM     := ${BUILD_DIR}/dummy_test/dummy_test
 CORE_NAME = $(shell echo $(CORE) | tr a-z A-Z)
 core_name = $(shell echo $(CORE) | tr A-Z a-z)
 
@@ -43,9 +44,8 @@ e203:
 	@mkdir -p ${BUILD_DIR}
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
-	@mkdir -p ${BUILD_DIR}/e203_src_tmp/
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb ${BUILD_DIR}/${CORE}_tb/
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/
+	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb
+	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator
 	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} -C ${BUILD_DIR}
 
 
@@ -107,9 +107,10 @@ debug_env: compile_c
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
 	
 debug_sim: debug_env compile_c
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb ${BUILD_DIR}/${CORE}_tb/
-	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/
-	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
+	@mkdir -p ${BUILD_DIR}/${CORE}_tb/
+	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb
+	@cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator
+	make debug_sim SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${DUMMY_TEST_PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 debug_openocd: 
 	make debug_openocd SIM_ROOT_DIR=${SIM_ROOT_DIR} -C ${BUILD_DIR}
@@ -118,7 +119,6 @@ debug_gdb:
 	@mkdir -p ${BUILD_DIR}
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
-	@cp -rf ${HARDWARE_SRC_DIR}/ ${BUILD_DIR}/e203_src_tmp
 	make debug_gdb SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 clean:

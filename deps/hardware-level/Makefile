@@ -230,7 +230,7 @@ wave:
 	gvim -p ${PROGRAM}.dump &
 	${WAV_TOOL} ${WAV_OPTIONS} ${WAV_INC} ${WAV_RTL} ${SIM_WAV_FILE}  &
 
-run: compile
+run: 
 	@rm -rf ${SIM_OUT_DIR}
 	@mkdir ${SIM_OUT_DIR}
 	@cd ${SIM_OUT_DIR};${SIM_CMD}
