@@ -22,7 +22,7 @@ compile_c:
 	rm -f ${C_BUILD_DIR}/Makefile; \
 	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
-	make dasm USE_HBIRD_SDK=${USE_HBIRD_SDK} TARGET=${TARGET} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make dasm TARGET=${TARGET} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 bin:
 	@mkdir -p ${C_BUILD_DIR}
@@ -31,7 +31,7 @@ bin:
 	rm -f ${C_BUILD_DIR}/Makefile; \
 	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
-	make bin USE_HBIRD_SDK=${USE_HBIRD_SDK} SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make bin SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 qemu:
 	@mkdir -p ${C_BUILD_DIR}
@@ -40,7 +40,7 @@ qemu:
 	rm -f ${C_BUILD_DIR}/Makefile; \
 	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
-	make qemu USE_HBIRD_SDK=0 SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make qemu USE_HB_SDK=0 SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	
 asm:
 	@mkdir -p ${C_BUILD_DIR}
@@ -65,7 +65,7 @@ e203:
 	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb; \
 	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator; \
 	fi
-	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} -C ${BUILD_DIR}
+	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} SIM_OPTIONS_COMMON=${SIM_OPTIONS_COMMON} -C ${BUILD_DIR}
 
 
 wave: ${BUILD_DIR}
@@ -147,27 +147,10 @@ debug_gdb:
 	make debug_gdb SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 clean:
+	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${COREMARK_DIR} -C ${SOTFWARE_MAKEFILES_DIR}
+	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} CORE=e203 -C ${SOTFWARE_MAKEFILES_DIR}
 	@rm -rf build
-	@rm -rf csrc/*.o
-	@rm -rf csrc/*.o.*
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/*.o
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/*.o.*
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Drivers/*.o
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Drivers/*.o.*
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/GCC/*.o
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/GCC/*.o.*
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Stubs/*.o
-	@rm -rf deps/C/SoC/hbirdv2/Common/Source/Stubs/*.o.*
-
-	@rm -rf deps/C/SoC/hbird/Common/Source/*.o
-	@rm -rf deps/C/SoC/hbird/Common/Source/*.o.*
-	@rm -rf deps/C/SoC/hbird/Common/Source/Drivers/*.o
-	@rm -rf deps/C/SoC/hbird/Common/Source/Drivers/*.o.*
-	@rm -rf deps/C/SoC/hbird/Common/Source/GCC/*.o
-	@rm -rf deps/C/SoC/hbird/Common/Source/GCC/*.o.*
-	@rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o
-	@rm -rf deps/C/SoC/hbird/Common/Source/Stubs/*.o.*
-	@echo " Clean done."
+	@echo "Clean done."
 
 .PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim compile_benchmark_src
 
