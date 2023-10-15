@@ -9,7 +9,9 @@ module tb_top(
     input	tms_i,
     input	tdi_i
 );
-
+  `ifdef JTAGVPI
+    `define NO_TIMEOUT
+  `endif
   `define CPU_TOP u_e203_soc_top.u_e203_subsys_top.u_e203_subsys_main.u_e203_cpu_top
   `define EXU `CPU_TOP.u_e203_cpu.u_e203_core.u_e203_exu
   `define ITCM `CPU_TOP.u_e203_srams.u_e203_itcm_ram.u_e203_itcm_gnrl_ram.u_sirv_sim_ram
@@ -237,7 +239,7 @@ module tb_top(
   end
 
   // watchdog
-`ifdef JTAGVPI
+`ifdef NO_TIMEOUT
 `else
   always @(posedge clk) begin
     if (cycle_count[20] == 1'b1) begin

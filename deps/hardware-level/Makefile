@@ -22,6 +22,7 @@ SIM_OPTIONS   += +incdir+${VSRC_DIR}/perips/apb_i2c/ -CFLAGS -I${VSRC_DIR}/perip
 SIM_OPTIONS   += --exe --trace --trace-structs --trace-params --trace-max-array 1024
 SIM_OPTIONS   += -CFLAGS "-Wall -DTOPLEVEL_NAME=tb_top -g -O0" -LDFLAGS "-pthread -lutil -lelf"
 SIM_OPTIONS   +=  -Wno-PINCONNECTEMPTY -Wno-fatal -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-UNOPTFLAT
+SIM_OPTIONS   += ${SIM_OPTIONS_COMMON}
 ifeq ($(SIM_TOOL),verilator5)
 SIM_OPTIONS   += --no-timing
 endif
@@ -33,9 +34,11 @@ endif
 ifeq ($(TRUE_SIM_TOOL),vcs)
 SIM_OPTIONS   := +v2k -sverilog -q +lint=all,noSVA-NSVU,noVCDE,noUI,noSVA-CE,noSVA-DIU  -debug_access+all -full64 -timescale=1ns/10ps
 SIM_OPTIONS   += +incdir+"${VSRC_DIR}/core/"+"${VSRC_DIR}/perips/"+"${VSRC_DIR}/perips/apb_i2c/"
+SIM_OPTIONS   += ${SIM_OPTIONS_COMMON}
 endif
 ifeq ($(TRUE_SIM_TOOL),iverilog)
 SIM_OPTIONS   := -o vvp.exec -I "${VSRC_DIR}/core/" -I "${VSRC_DIR}/perips/" -I "${VSRC_DIR}/perips/apb_i2c/" -D DISABLE_SV_ASSERTION=1 -g2005-sv
+SIM_OPTIONS   += ${SIM_OPTIONS_COMMON}
 endif
 
 RTL_V_FILES		:= $(wildcard ${VSRC_DIR}/*/*.v ${VSRC_DIR}/*/*/*.v)

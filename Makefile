@@ -22,7 +22,7 @@ compile_c:
 	rm -f ${C_BUILD_DIR}/Makefile; \
 	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
-	make dasm TARGET=${TARGET} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	make dasm TARGET=${TARGET} SOC=${SOC} PFLOAT=${PFLOAT} C_SRC_DIR=${C_SRC_DIR} SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
 bin:
 	@mkdir -p ${C_BUILD_DIR}
@@ -110,6 +110,39 @@ run_benchmarks: e203
 compile_benchmark_src:
 	make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${RISCV_BENCHMARK_DIR}
 
+coremark_env: 
+	@mkdir -p ${BUILD_DIR}/coremark_compiled/
+	@if [ ! -h ${BUILD_DIR}/coremark_compiled/Makefile ] ; \
+	then \
+	rm -f ${BUILD_DIR}/coremark_compiled/Makefile; \
+	ln -s ${COREMARK_DIR}/Makefile ${BUILD_DIR}/coremark_compiled/Makefile; \
+	fi
+	$(eval PROGRAM := ${BUILD_DIR}/coremark_compiled/coremark)
+	$(eval TARGET := coremark)
+	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
+
+	
+coremark: coremark_env e203 compile_c
+	make dasm TARGET=${TARGET} SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${BUILD_DIR}/coremark_compiled/
+	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} PROGRAM=${PROGRAM} -C ${BUILD_DIR}
+
+dhrystone_env: 
+	@mkdir -p ${BUILD_DIR}/dhrystone_compiled/
+	@if [ ! -h ${BUILD_DIR}/dhrystone_compiled/Makefile ] ; \
+	then \
+	rm -f ${BUILD_DIR}/dhrystone_compiled/Makefile; \
+	ln -s ${DHRYSTONE_DIR}/Makefile ${BUILD_DIR}/dhrystone_compiled/Makefile; \
+	fi
+	$(eval PROGRAM := ${BUILD_DIR}/dhrystone_compiled/dhrystone)
+	$(eval TARGET := dhrystone)
+	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
+
+	
+dhrystone: dhrystone_env e203 compile_c
+	make dasm TARGET=${TARGET} SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${BUILD_DIR}/dhrystone_compiled/
+	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} PROGRAM=${PROGRAM} -C ${BUILD_DIR}
+
+
 test_all: e203
 	@if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
 	then	\
@@ -148,9 +181,10 @@ debug_gdb:
 
 clean:
 	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${COREMARK_DIR} -C ${SOTFWARE_MAKEFILES_DIR}
+		make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${DHRYSTONE_DIR} -C ${SOTFWARE_MAKEFILES_DIR}
 	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} CORE=e203 -C ${SOTFWARE_MAKEFILES_DIR}
 	@rm -rf build
 	@echo "Clean done."
 
-.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim compile_benchmark_src
+.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim compile_benchmark_src dhrystone coremark
 
