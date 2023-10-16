@@ -14,7 +14,7 @@ SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN}mi-p*.dump))
 
 BENCHMARK_TESTS := $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/benchmark_compiled/*.dump))
-
+BENCHMARK_TESTS　?=  ${BUILD_DIR}/benchmark_compiled/
 compile_c:
 	@mkdir -p ${C_BUILD_DIR}
 	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
@@ -96,20 +96,12 @@ compile_test_src:
 		make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${ISA_TEST_DIR}/test_src/;	\
 	fi
 
-run_benchmarks: e203
-	if [ ! -e ${BUILD_DIR}/benchmark_compiled ] ; \
-	then	\
-		echo -e "\n" ;	\
-		echo "****************************************" ;	\
-		echo '    do "make compile_test_src" first';	\
-		echo "****************************************" ;	\
-		echo -e "\n" ;	\
-	else	\
-		$(foreach tst,$(BENCHMARK_TESTS), make test DUMPWAVE=0 SIM_ROOT_DIR=${SIM_ROOT_DIR} TEST_PROGRAM=${tst} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR};)\
-	fi
+run_benchmarks: compile_benchmark_src e203 
+	$(foreach tst,$(BENCHMARK_TESTS), make test DUMPWAVE=0 SIM_ROOT_DIR=${SIM_ROOT_DIR} TEST_PROGRAM=${tst} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR};)
+
 compile_benchmark_src:
 	make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${RISCV_BENCHMARK_DIR}
-
+	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
 coremark_env: 
 	@mkdir -p ${BUILD_DIR}/coremark_compiled/
 	@if [ ! -h ${BUILD_DIR}/coremark_compiled/Makefile ] ; \
@@ -118,12 +110,10 @@ coremark_env:
 	ln -s ${COREMARK_DIR}/Makefile ${BUILD_DIR}/coremark_compiled/Makefile; \
 	fi
 	$(eval PROGRAM := ${BUILD_DIR}/coremark_compiled/coremark)
-	$(eval TARGET := coremark)
 	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
-
 	
-coremark: coremark_env e203 compile_c
-	make dasm TARGET=${TARGET} SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${BUILD_DIR}/coremark_compiled/
+coremark: coremark_env e203
+	make dasm SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} -C ${BUILD_DIR}/coremark_compiled/
 	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} PROGRAM=${PROGRAM} -C ${BUILD_DIR}
 
 dhrystone_env: 
@@ -135,7 +125,7 @@ dhrystone_env:
 	fi
 	$(eval PROGRAM := ${BUILD_DIR}/dhrystone_compiled/dhrystone)
 	$(eval TARGET := dhrystone)
-	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
+	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT -DE203_CFG_ITCM_ADDR_WIDTH=20)
 
 	
 dhrystone: dhrystone_env e203 compile_c

@@ -22,11 +22,12 @@ SIM_OPTIONS   += +incdir+${VSRC_DIR}/perips/apb_i2c/ -CFLAGS -I${VSRC_DIR}/perip
 SIM_OPTIONS   += --exe --trace --trace-structs --trace-params --trace-max-array 1024
 SIM_OPTIONS   += -CFLAGS "-Wall -DTOPLEVEL_NAME=tb_top -g -O0" -LDFLAGS "-pthread -lutil -lelf"
 SIM_OPTIONS   +=  -Wno-PINCONNECTEMPTY -Wno-fatal -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-UNOPTFLAT
-SIM_OPTIONS   += ${SIM_OPTIONS_COMMON}
+
 ifeq ($(SIM_TOOL),verilator5)
 SIM_OPTIONS   += --no-timing
 endif
-SIM_OPTIONS_BACK := --top-module tb_top --exe -DE203_XLEN=32 -DDISABLE_SV_ASSERTION=1
+SIM_OPTIONS_BACK := --top-module tb_top --exe -DE203_XLEN=32 -DDISABLE_SV_ASSERTION=1 -DE203_CFG_ITCM_ADDR_WIDTH=20
+SIM_OPTIONS_BACK   += ${SIM_OPTIONS_COMMON}
 VTB_DIR      := ${BUILD_DIR}/${CORE}_tb/tb_verilator
 VERILATOR_CC_FILE := ${VTB_DIR}/tb_top.cc
 endif
@@ -258,7 +259,7 @@ debug_env:
 	$(eval SIM_OPTIONS  += +incdir+${JTAG_DIR} -CFLAGS -I${JTAG_DIR})
 	$(eval VERILATOR_CC_FILE  += ${JTAG_DIR}/jtag_common.c)
 	$(eval VERILATOR_CC_FILE  += ${JTAG_DIR}/jtagServer.cpp)
-	$(eval SIM_OPTIONS_BACK  += -DJTAGVPI=1 -CFLAGS -DJTAGVPI=1)
+	$(eval SIM_OPTIONS_BACK  += -DJTAGVPI=1 -CFLAGS -DJTAGVPI=1 -DE203_CFG_ITCM_ADDR_WIDTH=20)
 
 
 debug_sim: debug_env compile
@@ -270,6 +271,7 @@ debug_openocd:
 	${OPENOCD} -s ${JTAG_DIR} -f hbird-e203.cfg
 
 debug_gdb:
+	gvim -p ${PROGRAM}.dump &
 	${GDB} -ex "set remotetimeout 14000" -ex "target extended-remote localhost:3333"  -ex "info reg" ${PROGRAM}.elf
 
 .PHONY: run 
