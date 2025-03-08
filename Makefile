@@ -14,7 +14,7 @@ SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN
 SELF_TESTS += $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/test_compiled/rv${XLEN}mi-p*.dump))
 
 BENCHMARK_TESTS := $(patsubst %.dump,%,$(wildcard ${BUILD_DIR}/benchmark_compiled/*.dump))
-BENCHMARK_TESTS　?=  ${BUILD_DIR}/benchmark_compiled/
+BENCHMARK_TESTS ?=  ${BUILD_DIR}/benchmark_compiled/
 compile_c:
 	@mkdir -p ${C_BUILD_DIR}
 	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
@@ -77,7 +77,7 @@ run:
 sim: compile_c e203
 	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
-test: e203
+test: e203 compile_test_src
 
 	@if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
 	then	\
@@ -93,7 +93,7 @@ test: e203
 compile_test_src:
 	@if [ ! -e ${TEST_PROGRAM} ] ; \
 	then	\
-		make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} -j$(nproc) -C ${ISA_TEST_DIR}/test_src/;	\
+		make SIM_ROOT_DIR=${SIM_ROOT_DIR} XLEN=${XLEN} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -j$(nproc) -C ${ISA_TEST_DIR}/test_src/;	\
 	fi
 
 run_benchmarks: compile_benchmark_src e203 
@@ -133,7 +133,7 @@ dhrystone: dhrystone_env e203 compile_c
 	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} PROGRAM=${PROGRAM} -C ${BUILD_DIR}
 
 
-test_all: e203
+test_all: e203 compile_test_src
 	@if [ ! -e ${BUILD_DIR}/test_compiled ] ; \
 	then	\
 		echo -e "\n" ;	\
