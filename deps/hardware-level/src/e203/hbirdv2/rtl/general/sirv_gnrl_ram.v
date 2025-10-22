@@ -1,4 +1,4 @@
- /*                                                                      
+/*                                                                      
  Copyright 2018-2020 Nuclei System Technology, Inc.                
                                                                          
  Licensed under the Apache License, Version 2.0 (the "License");         
@@ -30,7 +30,9 @@ module sirv_gnrl_ram
   parameter DW = 32,
   parameter FORCE_X2ZERO = 1,
   parameter MW = 4,
-  parameter AW = 15 
+  parameter AW = 15,
+  parameter MEM_PATH = "",      // 新增：内存初始化文件路径
+  parameter INIT_EN = 0         // 新增：初始化使能
   ) (
   input            sd,
   input            ds,
@@ -55,7 +57,9 @@ sirv_sim_ram #(
     .DP (DP),
     .AW (AW),
     .MW (MW),
-    .DW (DW) 
+    .DW (DW),
+    .MEM_PATH (MEM_PATH),    // 新增参数传递
+    .INIT_EN (INIT_EN)       // 新增参数传递
 )u_sirv_sim_ram (
     .clk   (clk),
     .din   (din),
@@ -72,7 +76,9 @@ sirv_sim_ram #(
     .DP (DP),
     .AW (AW),
     .MW (MW),
-    .DW (DW) 
+    .DW (DW),
+    .MEM_PATH (MEM_PATH),    // 新增参数传递
+    .INIT_EN (INIT_EN)       // 新增参数传递
 )u_sirv_sim_ram (
     .clk   (clk),
     .din   (din),

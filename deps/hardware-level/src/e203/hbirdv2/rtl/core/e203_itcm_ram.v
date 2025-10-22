@@ -1,4 +1,4 @@
- /*                                                                      
+/*                                                                      
  Copyright 2018-2020 Nuclei System Technology, Inc.                
                                                                          
  Licensed under the Apache License, Version 2.0 (the "License");         
@@ -52,7 +52,9 @@ module e203_itcm_ram(
     .DP(`E203_ITCM_RAM_DP),
     .DW(`E203_ITCM_RAM_DW),
     .MW(`E203_ITCM_RAM_MW),
-    .AW(`E203_ITCM_RAM_AW) 
+    .AW(`E203_ITCM_RAM_AW),
+    .MEM_PATH(`E203_CFG_ITCM_INIT_PATH),    // 新增
+    .INIT_EN(`E203_CFG_ITCM_INIT_EN)        // 新增
   ) u_e203_itcm_gnrl_ram(
   .sd  (sd  ),
   .ds  (ds  ),
@@ -69,4 +71,4 @@ module e203_itcm_ram(
   );
                                                       
 endmodule
-  `endif//}
+  `endif//

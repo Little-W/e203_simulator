@@ -56,7 +56,7 @@ begin : DFFLRS_PROC
   if (rst_n == 1'b0)
     qout_r <= {DW{1'b1}};
   else if (lden == 1'b1)
-    qout_r <= #1 dnxt;
+    qout_r <= dnxt;
 end
 
 assign qout = qout_r;

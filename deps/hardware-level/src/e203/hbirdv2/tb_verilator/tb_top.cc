@@ -48,14 +48,14 @@ int main(int argc, char **argv) {
     soc->clk = 0;
     soc->rst_n = 0;
     soc->eval();
-    if (trace_en) tfp->dump(tick); tick++;
+    if (trace_en && soc->dump_en) tfp->dump(tick); tick++;
 
     // enough time to reset
     for (int i = 0; i < 500; i++)
     {
         soc->clk = !soc->clk;
         soc->eval();
-        if (trace_en)
+        if (trace_en && soc->dump_en)
             tfp->dump(tick);
         tick++;
     }
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
     {
         soc->clk = !soc->clk;
         soc->eval();
-        if (trace_en)
+        if (trace_en && soc->dump_en)
             tfp->dump(tick);
         tick++;
     }
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 #ifdef JTAGVPI
         jtag->doJTAG(tick, &soc->tms_i, &soc->tdi_i, &soc->tck_i, soc->tdo_o);
 #endif
-        if (trace_en)
+        if (trace_en && soc->dump_en)
             tfp->dump(tick);
         tick++;
     }

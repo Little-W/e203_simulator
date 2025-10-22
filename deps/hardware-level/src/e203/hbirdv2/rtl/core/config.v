@@ -1,4 +1,4 @@
- /*                                                                      
+/*                                                                      
  Copyright 2018-2020 Nuclei System Technology, Inc.                
                                                                          
  Licensed under the Apache License, Version 2.0 (the "License");         
@@ -89,8 +89,13 @@
 `define E203_CFG_FIO_ADDR_BASE  `E203_CFG_ADDR_SIZE'hf000_0000 
     `define E203_CFG_FIO_BASE_REGION  `E203_CFG_ADDR_SIZE-1:`E203_CFG_ADDR_SIZE-4
 
-
-
+// ITCM/DTCM/EXTRAM 内存初始化相关配置
+`define E203_CFG_ITCM_INIT_EN      0
+`define E203_CFG_ITCM_INIT_PATH    "/home/etc/FPGA/e203_simulator/build/tflm_compiled/tflm_ilm.mem"
+`define E203_CFG_DTCM_INIT_EN      0
+`define E203_CFG_DTCM_INIT_PATH    "/home/etc/FPGA/e203_simulator/build/tflm_compiled/tflm_ram.mem"
+`define E203_CFG_EXTRAM_INIT_EN    0
+`define E203_CFG_EXTRAM_INIT_PATH  "/home/etc/FPGA/e203_simulator/build/tflm_compiled/tflm_extram.mem"
 
 
 `define E203_CFG_HAS_ECC
@@ -98,3 +103,6 @@
 `define E203_CFG_SUPPORT_SHARE_MULDIV
 `define E203_CFG_SUPPORT_AMO
 `define E203_CFG_DTCM_ADDR_WIDTH 16
+
+`define FPGA_SOURCE
+`define SYNTHESIS

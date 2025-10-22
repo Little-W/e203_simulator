@@ -229,6 +229,17 @@ module e203_subsys_main(
   input  [`E203_XLEN-1:0]        sysmem_icb_rsp_rdata,
   `endif//}
 
+  //////////////////////////////////////////////////////////////
+  output                         sram_icb_cmd_valid,
+  input                          sram_icb_cmd_ready,
+  output [31:0]                  sram_icb_cmd_addr,
+  output                         sram_icb_cmd_read,
+  output [`E203_XLEN-1:0]        sram_icb_cmd_wdata,
+  output [`E203_XLEN/8-1:0]      sram_icb_cmd_wmask,
+  input                          sram_icb_rsp_valid,
+  output                         sram_icb_rsp_ready,
+  input  [`E203_XLEN-1:0]        sram_icb_rsp_rdata,
+  
   input  test_mode,
 
   input  ls_clk,
@@ -881,6 +892,16 @@ e203_subsys_mems u_e203_subsys_mems(
     .dm_icb_rsp_valid    (dm_icb_rsp_valid  ),
     .dm_icb_rsp_ready    (dm_icb_rsp_ready  ),
     .dm_icb_rsp_rdata    (dm_icb_rsp_rdata  ),
+
+    .sram_icb_cmd_valid  (sram_icb_cmd_valid),
+    .sram_icb_cmd_ready  (sram_icb_cmd_ready),
+    .sram_icb_cmd_addr   (sram_icb_cmd_addr ),
+    .sram_icb_cmd_read   (sram_icb_cmd_read ),
+    .sram_icb_cmd_wdata  (sram_icb_cmd_wdata),
+    .sram_icb_cmd_wmask  (sram_icb_cmd_wmask),
+    .sram_icb_rsp_valid  (sram_icb_rsp_valid),
+    .sram_icb_rsp_ready  (sram_icb_rsp_ready),
+    .sram_icb_rsp_rdata  (sram_icb_rsp_rdata),
 
     .clk           (hfclk  ),
     .bus_rst_n     (bus_rst_n), 

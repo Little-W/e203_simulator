@@ -896,10 +896,10 @@ sirv_flash_qspi_top u_sirv_qspi0_top(
   wire [`E203_XLEN-1:0] gpioA_apb_prdata;
 
   wire [32-1:0] gpioA_i_ival;
-  wire [32-1:0] gpioA_o_oval;
-  wire [32-1:0] gpioA_o_oe;
+  (*mark_debug = "true"*)wire [32-1:0] gpioA_o_oval;
+  (*mark_debug = "true"*)wire [32-1:0] gpioA_o_oe;
   wire [32-1:0] gpioA_in_sync;
-  wire [32-1:0] gpioA_iof;
+  (*mark_debug = "true"*)wire [32-1:0] gpioA_iof;
    
 sirv_gnrl_icb2apb # (
   .AW   (32),
@@ -1029,8 +1029,8 @@ apb_gpio # (
   wire [`E203_XLEN-1:0] uart0_apb_pwdata;
   wire [`E203_XLEN-1:0] uart0_apb_prdata;
 
-  wire  uart0_txd;
-  wire  uart0_rxd;
+  (*mark_debug = "true"*)wire  uart0_txd;
+  (*mark_debug = "true"*)wire  uart0_rxd;
    
 sirv_gnrl_icb2apb # (
   .AW   (32),

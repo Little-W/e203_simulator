@@ -235,12 +235,25 @@ module e203_subsys_top(
   output  io_pads_jtag_TRST_n_o_pue,
   output  io_pads_jtag_TRST_n_o_ds,
 
+  output                         sram_icb_cmd_valid,
+  input                          sram_icb_cmd_ready,
+  output [31:0]                  sram_icb_cmd_addr,
+  output                         sram_icb_cmd_read,
+  output [`E203_XLEN-1:0]        sram_icb_cmd_wdata,
+  output [`E203_XLEN/8-1:0]      sram_icb_cmd_wmask,
+  input                          sram_icb_rsp_valid,
+  output                         sram_icb_rsp_ready,
+  input  [`E203_XLEN-1:0]        sram_icb_rsp_rdata,
+
   input  test_iso_override,
-  input  test_mode 
+  input  test_mode,
+
+  output hfclk,
+  output hfclkrst
   );
 
-  wire hfclk;// The PLL generated high-speed clock 
-  wire hfclkrst;// The reset signal to disable PLL
+  // wire hfclk;// The PLL generated high-speed clock 
+  // wire hfclkrst;// The reset signal to disable PLL
   wire corerst;
 
   ///////////////////////////////////////
@@ -473,6 +486,16 @@ module e203_subsys_top(
     .sysmem_icb_rsp_ready  (sysmem_icb_rsp_ready),
     .sysmem_icb_rsp_err    (sysmem_icb_rsp_err  ),
     .sysmem_icb_rsp_rdata  (sysmem_icb_rsp_rdata),
+    
+    .sram_icb_cmd_valid  (sram_icb_cmd_valid),
+    .sram_icb_cmd_ready  (sram_icb_cmd_ready),
+    .sram_icb_cmd_addr   (sram_icb_cmd_addr ),
+    .sram_icb_cmd_read   (sram_icb_cmd_read ),
+    .sram_icb_cmd_wdata  (sram_icb_cmd_wdata),
+    .sram_icb_cmd_wmask  (sram_icb_cmd_wmask),
+    .sram_icb_rsp_valid  (sram_icb_rsp_valid),
+    .sram_icb_rsp_ready  (sram_icb_rsp_ready),
+    .sram_icb_rsp_rdata  (sram_icb_rsp_rdata),
 
     .test_mode     (test_mode), 
     .ls_clk        (lfextclk), 

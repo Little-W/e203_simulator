@@ -33,7 +33,7 @@
 /* ToDo: add here your necessary defines for device initialization
          following is an example for different system frequencies */
 #ifndef SYSTEM_CLOCK
-#define SYSTEM_CLOCK    (80000000UL)
+#define SYSTEM_CLOCK    (70000000UL)
 #endif
 
 /**
@@ -171,6 +171,8 @@ static void system_default_exception_handler(unsigned long mcause, unsigned long
     printf("MCAUSE: 0x%lx\r\n", mcause);
     printf("MEPC  : 0x%lx\r\n", __RV_CSR_READ(CSR_MEPC));
     printf("MTVAL : 0x%lx\r\n", __RV_CSR_READ(CSR_MBADADDR));
+    printf("SP    : 0x%lx\r\n", sp);
+    printf("CYCLE : 0x%lx\r\n", __get_rv_cycle());
     while(1);
 }
 
@@ -463,7 +465,12 @@ int32_t PLIC_Register_IRQ(uint32_t source, uint8_t priority, void *handler)
 void _premain_init(void)
 {
     /* TODO: Add your own initialization code here, called before main */
+#if ! defined(USE_SIM_FREQ)
     SystemCoreClock = get_cpu_freq();
+#else
+    SystemCoreClock = SYSTEM_CLOCK;
+#endif
+
 #if ! defined(SIMULATION_SPIKE) && ! defined(SIMULATION_XLSPIKE)
     gpio_iof_config(GPIOA, IOF_UART_MASK);
     uart_init(SOC_DEBUG_UART, 115200);

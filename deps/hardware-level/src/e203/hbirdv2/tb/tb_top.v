@@ -12,8 +12,10 @@ module tb_top();
   `define CPU_TOP u_e203_soc_top.u_e203_subsys_top.u_e203_subsys_main.u_e203_cpu_top
   `define EXU `CPU_TOP.u_e203_cpu.u_e203_core.u_e203_exu
   `define ITCM `CPU_TOP.u_e203_srams.u_e203_itcm_ram.u_e203_itcm_gnrl_ram.u_sirv_sim_ram
+  `define DTCM `CPU_TOP.u_e203_srams.u_e203_dtcm_ram.u_e203_dtcm_gnrl_ram.u_sirv_sim_ram
+  `define EXT_RAM u_e203_soc_top.u_sram_icb.u_sram.u_sirv_sim_ram
 
-  `define PC_WRITE_TOHOST       `E203_PC_SIZE'h80000086
+  `define PC_WRITE_TOHOST       `E203_PC_SIZE'h80000042
   `define PC_EXT_IRQ_BEFOR_MRET `E203_PC_SIZE'h800000a6
   `define PC_SFT_IRQ_BEFOR_MRET `E203_PC_SIZE'h800000be
   `define PC_TMR_IRQ_BEFOR_MRET `E203_PC_SIZE'h800000d6
@@ -22,6 +24,28 @@ module tb_top();
   wire [`E203_XLEN-1:0] x3 = `EXU.u_e203_exu_regfile.rf_r[3];
   wire [`E203_PC_SIZE-1:0] pc = `EXU.u_e203_exu_commit.alu_cmt_i_pc;
   wire [`E203_PC_SIZE-1:0] pc_vld = `EXU.u_e203_exu_commit.alu_cmt_i_valid;
+  wire [31:0] mcycle = `EXU.u_e203_exu_csr.mcycle_r;
+  wire [31:0] mcycleh = `EXU.u_e203_exu_csr.mcycleh_r;
+  // 64-bit cycle constructed from CSR mcycleh:mcycle
+  wire [63:0] cycle = {mcycleh, mcycle};
+
+  // Add PC stall detection registers
+  reg [`E203_PC_SIZE-1:0] prev_pc;
+  reg [6:0] pc_stall_cnt; // 7-bit counter for up to 127 cycles
+
+  wire lfextclk;
+  reg [5:0] cnt;
+  always @(posedge clk or negedge rst_n)
+  begin 
+    if(rst_n == 1'b0) begin
+        cnt <= 0;
+    end
+    else begin
+        cnt <= cnt + 1;
+    end
+  end
+  assign lfextclk = cnt[5];
+
 
   reg [31:0] pc_write_to_host_cnt;
   reg [31:0] pc_write_to_host_cycle;
@@ -29,7 +53,41 @@ module tb_top();
   reg [31:0] cycle_count;
   reg pc_write_to_host_flag;
 
-  always @(posedge hfclk or negedge rst_n)
+  // dump control variables (based on 64-bit cycle)
+  reg [63:0] dump_start;
+  reg [63:0] dump_end;
+
+  // parse plusargs for dump range and print status
+  initial begin
+      // default from module parameters; plusargs can override
+      dump_start = DUMP_START;
+      dump_end   = DUMP_END;
+      if ($value$plusargs("dump_start=%d", dump_start)) begin
+          $display("dump_start overridden by plusarg: %0d", dump_start);
+      end else begin
+          $display("dump_start (param) = %0d", dump_start);
+      end
+      if ($value$plusargs("dump_end=%d", dump_end)) begin
+          $display("dump_end overridden by plusarg: %0d", dump_end);
+      end else begin
+          $display("dump_end (param) = %0d", dump_end);
+      end
+  end
+
+  // update dump_en based on cycle_count
+  always @(posedge clk or negedge rst_n) begin
+      if (rst_n == 1'b0) begin
+          dump_en <= 1'b0;
+      end else begin
+          // use 64-bit cycle CSR to decide dumping window
+          if ((cycle >= dump_start) && (cycle <= dump_end))
+            dump_en <= 1'b1;
+          else
+            dump_en <= 1'b0;
+      end
+  end
+
+  always @(posedge clk or negedge rst_n)
   begin 
     if(rst_n == 1'b0) begin
         pc_write_to_host_cnt <= 32'b0;
@@ -45,7 +103,7 @@ module tb_top();
     end
   end
 
-  always @(posedge hfclk or negedge rst_n)
+  always @(posedge clk or negedge rst_n)
   begin 
     if(rst_n == 1'b0) begin
         cycle_count <= 32'b0;
@@ -58,7 +116,7 @@ module tb_top();
   wire i_valid = `EXU.i_valid;
   wire i_ready = `EXU.i_ready;
 
-  always @(posedge hfclk or negedge rst_n)
+  always @(posedge clk or negedge rst_n)
   begin 
     if(rst_n == 1'b0) begin
         valid_ir_cycle <= 32'b0;
@@ -169,8 +227,12 @@ module tb_top();
 
   initial begin
     $display("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");  
-    if($value$plusargs("TESTCASE=%s",testcase))begin
-      $display("TESTCASE=%s",testcase);
+    if($value$plusargs("itcm_init=%s",testcase))begin
+      $display("itcm_init=%s",testcase);
+    end
+    else begin
+	    $display("No itcm_init defined!");
+	    $finish;
     end
 
     pc_write_to_host_flag <=0;
@@ -221,11 +283,15 @@ module tb_top();
      $finish;
   end
 
-  initial begin
-    #40000000
-        $display("Time Out !!!");
-     $finish;
+  // watchdog
+`ifndef NO_TIMEOUT
+  always @(posedge clk) begin
+    if (cycle_count[20] == 1'b1) begin
+      $display("Time Out !!!");
+      $finish;
+    end
   end
+`endif
 
   always
   begin 
@@ -265,9 +331,13 @@ module tb_top();
 
   integer i;
 
+    reg [7:0] ext_mem [0:(131072*4)-1];
     reg [7:0] itcm_mem [0:(`E203_ITCM_RAM_DP*8)-1];
+    reg [7:0] dtcm_mem [0:(`E203_DTCM_RAM_DP*4)-1];
     initial begin
-      $readmemh({testcase, ".verilog"}, itcm_mem);
+      $readmemh({testcase, "_ilm.verilog"}, itcm_mem);
+      $readmemh({testcase, "_ram.verilog"}, dtcm_mem);
+      $readmemh({testcase, "_extram.verilog"}, ext_mem);
 
       for (i=0;i<(`E203_ITCM_RAM_DP);i=i+1) begin
           `ITCM.mem_r[i][00+7:00] = itcm_mem[i*8+0];
@@ -278,6 +348,20 @@ module tb_top();
           `ITCM.mem_r[i][40+7:40] = itcm_mem[i*8+5];
           `ITCM.mem_r[i][48+7:48] = itcm_mem[i*8+6];
           `ITCM.mem_r[i][56+7:56] = itcm_mem[i*8+7];
+      end
+
+      for (i=0;i<(`E203_DTCM_RAM_DP);i=i+1) begin
+          `DTCM.mem_r[i][00+7:00] = dtcm_mem[i*4+0];
+          `DTCM.mem_r[i][08+7:08] = dtcm_mem[i*4+1];
+          `DTCM.mem_r[i][16+7:16] = dtcm_mem[i*4+2];
+          `DTCM.mem_r[i][24+7:24] = dtcm_mem[i*4+3];
+      end
+
+      for (i=0;i<(131072);i=i+1) begin
+          `EXT_RAM.mem_r[i][00+7:00] = ext_mem[i*4+0];
+          `EXT_RAM.mem_r[i][08+7:08] = ext_mem[i*4+1];
+          `EXT_RAM.mem_r[i][16+7:16] = ext_mem[i*4+2];
+          `EXT_RAM.mem_r[i][24+7:24] = ext_mem[i*4+3];
       end
 
         $display("ITCM 0x00: %h", `ITCM.mem_r[8'h00]);
@@ -291,7 +375,21 @@ module tb_top();
         $display("ITCM 0x16: %h", `ITCM.mem_r[8'h16]);
         $display("ITCM 0x20: %h", `ITCM.mem_r[8'h20]);
 
-    end 
+        $display("DTCM 0x00: %h", `DTCM.mem_r[8'h00]);
+        $display("DTCM 0x01: %h", `DTCM.mem_r[8'h01]);
+        $display("DTCM 0x02: %h", `DTCM.mem_r[8'h02]);
+        $display("DTCM 0x03: %h", `DTCM.mem_r[8'h03]);
+
+        $display("EXT_RAM 0x00: %h", `EXT_RAM.mem_r[8'h00]);
+        $display("EXT_RAM 0x01: %h", `EXT_RAM.mem_r[8'h01]);
+        $display("EXT_RAM 0x02: %h", `EXT_RAM.mem_r[8'h02]);
+        $display("EXT_RAM 0x03: %h", `EXT_RAM.mem_r[8'h03]);
+        $display("EXT_RAM 0x04: %h", `EXT_RAM.mem_r[8'h04]);
+        $display("EXT_RAM 0x05: %h", `EXT_RAM.mem_r[8'h05]);
+        $display("EXT_RAM 0x06: %h", `EXT_RAM.mem_r[8'h06]);
+        $display("EXT_RAM 0x07: %h", `EXT_RAM.mem_r[8'h07]);
+
+    end
 
 
 

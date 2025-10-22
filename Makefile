@@ -20,16 +20,22 @@ compile_c:
 	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
 	then \
 	rm -f ${C_BUILD_DIR}/Makefile; \
-	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOFTWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
 	make dasm TARGET=${TARGET} SOC=${SOC} PFLOAT=${PFLOAT} C_SRC_DIR=${C_SRC_DIR} SIM_ROOT_DIR=${SIM_ROOT_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
+	@if [ -e ${BUILD_DIR}/c_compiled/${TARGET}.verilog ]; then \
+		python3 ${SIM_ROOT_DIR}/deps/tools/split_memory.py ${BUILD_DIR}/c_compiled/${TARGET}.verilog --force; \
+		echo "Memory splitting completed"; \
+	else \
+		echo "tflm.verilog not found, skip memory split"; \
+	fi
 
 bin:
 	@mkdir -p ${C_BUILD_DIR}
 	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
 	then \
 	rm -f ${C_BUILD_DIR}/Makefile; \
-	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOFTWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
 	make bin SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 
@@ -38,7 +44,7 @@ qemu:
 	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
 	then \
 	rm -f ${C_BUILD_DIR}/Makefile; \
-	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOFTWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
 	make qemu USE_HB_SDK=0 SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	
@@ -47,7 +53,7 @@ asm:
 	@if [ ! -h ${C_BUILD_DIR}/Makefile ] ; \
 	then \
 	rm -f ${C_BUILD_DIR}/Makefile; \
-	ln -s ${SOTFWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
+	ln -s ${SOFTWARE_MAKEFILES_DIR}/Makefile ${C_BUILD_DIR}/Makefile; \
 	fi
 	make asm USE_HB_SDK=0 SOC=${SOC} CORE=e203 SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${C_SRC_DIR} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} -C ${C_BUILD_DIR}
 	@mv $(C_SRC_DIR)/*.S* $(C_BUILD_DIR)
@@ -65,7 +71,7 @@ e203:
 	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb/ ${BUILD_DIR}/${CORE}_tb/tb; \
 	cp -rf ${HARDWARE_SRC_DIR}/${CORE}/${SOC}/tb_verilator ${BUILD_DIR}/${CORE}_tb/tb_verilator; \
 	fi
-	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} SIM_OPTIONS_COMMON=${SIM_OPTIONS_COMMON} -C ${BUILD_DIR}
+	make compile SIM_ROOT_DIR=${SIM_ROOT_DIR} SIM_TOOL=${SIM_TOOL} SOC=${SOC} SIM_OPTIONS_COMMON=${SIM_OPTIONS_COMMON} -C ${BUILD_DIR} -j36
 
 
 wave: ${BUILD_DIR}
@@ -113,7 +119,7 @@ coremark_env:
 	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
 	
 coremark: coremark_env e203
-	make dasm SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} -C ${BUILD_DIR}/coremark_compiled/
+	make dasm SOC=${SOC} USE_OPEN_GNU_GCC=${USE_OPEN_GNU_GCC} SIM_ROOT_DIR=${SIM_ROOT_DIR} -C ${BUILD_DIR}/coremark_compiled/
 	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} PROGRAM=${PROGRAM} -C ${BUILD_DIR}
 
 dhrystone_env: 
@@ -151,6 +157,7 @@ debug_env: compile_c
 	@rm -f ${BUILD_DIR}/Makefile
 	@ln -s ${HARDWARE_DEPS_ROOT}/Makefile ${BUILD_DIR}/Makefile
 	
+	
 debug_sim: debug_env compile_c
 	@if [ ! -d ${BUILD_DIR}/${CORE}_tb/ ] ; \
 	then	\
@@ -170,11 +177,42 @@ debug_gdb:
 	make debug_gdb SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} PROGRAM=${PROGRAM} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 clean:
-	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${COREMARK_DIR} -C ${SOTFWARE_MAKEFILES_DIR}
-		make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${DHRYSTONE_DIR} -C ${SOTFWARE_MAKEFILES_DIR}
-	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} CORE=e203 -C ${SOTFWARE_MAKEFILES_DIR}
+	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${COREMARK_DIR} -C ${SOFTWARE_MAKEFILES_DIR}
+		make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} C_SRC_DIR=${DHRYSTONE_DIR} -C ${SOFTWARE_MAKEFILES_DIR}
+	make clean SIM_ROOT_DIR=${SIM_ROOT_DIR} SOC=${SOC} C_SRC_DIR=${C_SRC_DIR} CORE=e203 -C ${SOFTWARE_MAKEFILES_DIR}
 	@rm -rf build
 	@echo "Clean done."
 
-.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim compile_benchmark_src dhrystone coremark
+tflm_env: 
+	@mkdir -p ${BUILD_DIR}/tflm_compiled/
+	@if [ ! -h ${BUILD_DIR}/tflm_compiled/Makefile ] ; \
+	then \
+	rm -f ${BUILD_DIR}/tflm_compiled/Makefile; \
+	ln -s ${TFLM_DIR}/Makefile ${BUILD_DIR}/tflm_compiled/Makefile; \
+	fi
+	@mkdir -p ${BUILD_DIR}/tflm_compiled/tflm_libs
+	@{ \
+		export PATH="${RISCV_GCC_ROOT}/bin/:$$PATH"; \
+		cd ${BUILD_DIR}/tflm_compiled/tflm_libs && \
+		cmake -DCMAKE_BUILD_TYPE=Debug -DTARGET_ARCH=rv32imac -DRISCV_ABI=ilp32 -DTOOLCHAIN=gcc \
+		      -DCMAKE_C_COMPILER=riscv64-unknown-elf-gcc -DCMAKE_CXX_COMPILER=riscv64-unknown-elf-g++ ${TFLM_DIR}/my_tflm && \
+		cmake --build . -- -j$$(nproc); \
+	}
+	$(eval PROGRAM := ${BUILD_DIR}/tflm_compiled/tflm)
+	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
+
+tflm: tflm_env e203
+	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
+	make dasm SOC=${SOC} SIM_ROOT_DIR=${SIM_ROOT_DIR} -C ${BUILD_DIR}/tflm_compiled/ -j$$(nproc)
+	@if [ -e ${BUILD_DIR}/tflm_compiled/tflm.verilog ]; then \
+		python3 ${SIM_ROOT_DIR}/deps/tools/split_memory.py ${BUILD_DIR}/tflm_compiled/tflm.verilog --force; \
+		echo "Memory splitting completed"; \
+	else \
+		echo "tflm.verilog not found, skip memory split"; \
+	fi
+	${SIZE} --format=berkeley ${BUILD_DIR}/tflm_compiled/tflm.elf 
+	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} PROGRAM=${PROGRAM} -C ${BUILD_DIR} -j$$(nproc)
+	
+
+.PHONY: compile run install clean all e203 sim asm test test_all qemu compile_c compile_test_src debug_gdb debug_openocd debug_sim compile_benchmark_src dhrystone coremark tflm tflm_env
 

@@ -175,6 +175,8 @@
   // The ITCM size is 2^addr_width bytes, and ITCM is 64bits wide (8 bytes)
   //  so the DP is 2^addr_wdith/8
   //  so the AW is addr_wdith - 3
+  //DP = 存储深度 = 总字节数 / 每单元字节数 = 2^addr_width / 8 = 2^(addr_width-3)
+  //例如addr_width=16，则DP=2^(16-3)=2^13=8192（即8K个64位单元，容量64KB）
   `define E203_ITCM_RAM_DP      (1<<(`E203_CFG_ITCM_ADDR_WIDTH-3)) 
   `define E203_ITCM_RAM_AW          (`E203_CFG_ITCM_ADDR_WIDTH-3) 
   `define E203_ITCM_BASE_REGION  `E203_ADDR_SIZE-1:`E203_ITCM_ADDR_WIDTH

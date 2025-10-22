@@ -1,4 +1,4 @@
- /*                                                                      
+/*                                                                      
  Copyright 2018-2020 Nuclei System Technology, Inc.                
                                                                          
  Licensed under the Apache License, Version 2.0 (the "License");         
@@ -79,6 +79,17 @@ module e203_subsys_mems(
   output                         dm_icb_rsp_ready,
   input  [`E203_XLEN-1:0]        dm_icb_rsp_rdata,
 
+  // 新增SRAM ICB接口信号
+  output                         sram_icb_cmd_valid,
+  input                          sram_icb_cmd_ready,
+  output [31:0]                  sram_icb_cmd_addr,
+  output                         sram_icb_cmd_read,
+  output [`E203_XLEN-1:0]        sram_icb_cmd_wdata,
+  output [`E203_XLEN/8-1:0]      sram_icb_cmd_wmask,
+  input                          sram_icb_rsp_valid,
+  output                         sram_icb_rsp_ready,
+  input  [`E203_XLEN-1:0]        sram_icb_rsp_rdata,
+
   input  clk,
   input  bus_rst_n,
   input  rst_n
@@ -132,8 +143,8 @@ module e203_subsys_mems(
   .O1_BASE_ADDR       (32'h0000_1000),       
   .O1_BASE_REGION_LSB (12),
   //  * Not used  : 0x0002 0000 -- 0x0003 FFFF
-  .O2_BASE_ADDR       (32'h0002_0000),       
-  .O2_BASE_REGION_LSB (17),
+  .O2_BASE_ADDR       (32'h0008_0000),       
+  .O2_BASE_REGION_LSB (19), // 512KB for SRAM
   //  * QSPI0-RO  : 0x2000 0000 -- 0x3FFF FFFF
   .O3_BASE_ADDR       (32'h2000_0000),       
   .O3_BASE_REGION_LSB (29),
@@ -217,26 +228,26 @@ module e203_subsys_mems(
     .o1_icb_rsp_excl_ok(1'b0  ),
     .o1_icb_rsp_rdata  (mrom_icb_rsp_rdata),
 
-  //  * Not used    
-    .o2_icb_enable     (1'b0),
+  //  sram    
+    .o2_icb_enable     (1'b1),
 
-    .o2_icb_cmd_valid  (),
-    .o2_icb_cmd_ready  (1'b0),
-    .o2_icb_cmd_addr   (),
-    .o2_icb_cmd_read   (),
-    .o2_icb_cmd_wdata  (),
-    .o2_icb_cmd_wmask  (),
+    .o2_icb_cmd_valid  (sram_icb_cmd_valid),
+    .o2_icb_cmd_ready  (sram_icb_cmd_ready),
+    .o2_icb_cmd_addr   (sram_icb_cmd_addr ),
+    .o2_icb_cmd_read   (sram_icb_cmd_read ),
+    .o2_icb_cmd_wdata  (sram_icb_cmd_wdata),
+    .o2_icb_cmd_wmask  (sram_icb_cmd_wmask),
     .o2_icb_cmd_lock   (),
     .o2_icb_cmd_excl   (),
     .o2_icb_cmd_size   (),
     .o2_icb_cmd_burst  (),
     .o2_icb_cmd_beat   (),
     
-    .o2_icb_rsp_valid  (1'b0),
-    .o2_icb_rsp_ready  (),
-    .o2_icb_rsp_err    (1'b0  ),
+    .o2_icb_rsp_valid  (sram_icb_rsp_valid),
+    .o2_icb_rsp_ready  (sram_icb_rsp_ready),
+    .o2_icb_rsp_err    (1'b0),
     .o2_icb_rsp_excl_ok(1'b0  ),
-    .o2_icb_rsp_rdata  (`E203_XLEN'b0),
+    .o2_icb_rsp_rdata  (sram_icb_rsp_rdata),
 
 
   //  * QSPI0-RO  
@@ -512,6 +523,45 @@ sirv_expl_axi_slv # (
     .clk           (clk  ),
     .rst_n         (rst_n) 
   );
+
+
+  // SRAM ICB信号定义
+  // wire sram_icb_cmd_valid;
+  // wire sram_icb_cmd_ready;
+  // wire [31:0] sram_icb_cmd_addr;
+  // wire sram_icb_cmd_read;
+  // wire [`E203_XLEN-1:0] sram_icb_cmd_wdata;
+  // wire [`E203_XLEN/8-1:0] sram_icb_cmd_wmask;
+  // wire sram_icb_rsp_valid;
+  // wire sram_icb_rsp_ready;
+  // wire [        `E203_XLEN-1:0] sram_icb_rsp_rdata;
+
+  // SRAM实例化
+  // sram_icb #(
+  //   .DW(`E203_XLEN),
+  //   .MW(`E203_XLEN/8),
+  //   .AW(19),
+  //   .AW_LSB(0), // 字节寻址
+  //   .USR_W(1),
+  //   .DP(524288), // 2^19
+  //   .FORCE_X2ZERO(0)
+  // ) u_sram_icb (
+  //   .clk(clk),
+  //   .rst_n(rst_n),
+  //   .i_icb_cmd_valid(sram_icb_cmd_valid),
+  //   .i_icb_cmd_ready(sram_icb_cmd_ready),
+  //   .i_icb_cmd_read(sram_icb_cmd_read),
+  //   .i_icb_cmd_addr(sram_icb_cmd_addr[18:0]),
+  //   .i_icb_cmd_wdata(sram_icb_cmd_wdata),
+  //   .i_icb_cmd_wmask(sram_icb_cmd_wmask),
+  //   .i_icb_cmd_usr(1'b0),
+  //   .i_icb_rsp_valid(sram_icb_rsp_valid),
+  //   .i_icb_rsp_ready(sram_icb_rsp_ready),
+  //   .i_icb_rsp_rdata(sram_icb_rsp_rdata),
+  //   .i_icb_rsp_usr(),
+  //   .tcm_cgstop(1'b0),
+  //   .test_mode(1'b0)
+  // );
 
 
 endmodule

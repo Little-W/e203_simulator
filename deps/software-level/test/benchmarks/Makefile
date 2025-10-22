@@ -6,7 +6,7 @@
 
 XLEN ?= 32
 include $(SIM_ROOT_DIR)/make.conf
-include $(SOTFWARE_MAKEFILES_DIR)/Makefile.conf
+include $(SOFTWARE_MAKEFILES_DIR)/Makefile.conf
 src_dir := $(ISA_TEST_DIR)/test_src/
 OUT_DIR = $(BUILD_DIR)/benchmark_compiled
 

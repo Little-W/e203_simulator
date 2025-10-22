@@ -613,7 +613,7 @@ module e203_ifu_ift2icb(
   `endif//}
 
   `ifdef E203_HAS_MEM_ITF //{
-  wire[31:0] ifu2biu_icb_rsp_instr = 
+   wire[31:0] ifu2biu_icb_rsp_instr = 
      `ifdef E203_SYSMEM_DATA_WIDTH_IS_32 //{
                     ifu2biu_icb_rsp_rdata;
      `else//}{

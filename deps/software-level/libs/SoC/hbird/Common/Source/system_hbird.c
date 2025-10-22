@@ -171,6 +171,7 @@ static void system_default_exception_handler(unsigned long mcause, unsigned long
     printf("MCAUSE: 0x%lx\r\n", mcause);
     printf("MEPC  : 0x%lx\r\n", __RV_CSR_READ(CSR_MEPC));
     printf("MTVAL : 0x%lx\r\n", __RV_CSR_READ(CSR_MBADADDR));
+    printf("SP    : 0x%lx\r\n", sp);
     while(1);
 }
 

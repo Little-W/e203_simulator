@@ -51,7 +51,9 @@ module e203_dtcm_ram(
     .DP(`E203_DTCM_RAM_DP),
     .DW(`E203_DTCM_RAM_DW),
     .MW(`E203_DTCM_RAM_MW),
-    .AW(`E203_DTCM_RAM_AW) 
+    .AW(`E203_DTCM_RAM_AW),
+    .MEM_PATH(`E203_CFG_DTCM_INIT_PATH),    // 新增
+    .INIT_EN(`E203_CFG_DTCM_INIT_EN)        // 新增
   ) u_e203_dtcm_gnrl_ram(
   .sd  (sd  ),
   .ds  (ds  ),
