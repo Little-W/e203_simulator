@@ -512,7 +512,7 @@ module e203_cpu #(
     .nice_icb_rsp_valid   (nice_icb_rsp_valid),
     .nice_icb_rsp_ready   (nice_icb_rsp_ready),
     .nice_icb_rsp_rdata   (nice_icb_rsp_rdata),
-    .nice_icb_rsp_err     (nice_icb_rsp_err)	
+    .nice_icb_rsp_err     (nice_icb_rsp_err)
 
    );
   `endif//}

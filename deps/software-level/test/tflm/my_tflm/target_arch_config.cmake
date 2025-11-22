@@ -1,0 +1,57 @@
+# target_arch_config.cmake
+# 管理 TensorFlow Lite Micro 的目标架构配置（已切换为 RISC-V）
+
+# 优化内核目录设置，类似Makefile中的OPTIMIZED_KERNEL_DIR
+set(OPTIMIZED_KERNEL_DIR "nmsis_nn" CACHE STRING "Specify which specialized kernel implementation should be pulled in")
+set(OPTIMIZED_KERNEL_DIR_PREFIX ${TENSORFLOW_ROOT}tensorflow/lite/micro/kernels)
+set(OPTIMIZED_SIGNAL_KERNEL_DIR_PREFIX ${TENSORFLOW_ROOT}signal/micro/kernels)
+
+# 协处理器设置，类似Makefile中的CO_PROCESSOR
+set(CO_PROCESSOR "" CACHE STRING "Specify which co-processor's kernel implementation should be pulled in")
+
+# 内核优化设置，类似Makefile中的OPTIMIZE_KERNELS_FOR
+set(OPTIMIZE_KERNELS_FOR "KERNELS_OPTIMIZED_FOR_SPEED" CACHE STRING "Optimize kernels for speed or memory")
+set_property(CACHE OPTIMIZE_KERNELS_FOR PROPERTY STRINGS KERNELS_OPTIMIZED_FOR_SPEED KERNELS_OPTIMIZED_FOR_SIZE)
+
+# 外部目录设置
+set(EXTERNAL_DIR "" CACHE STRING "External directory for additional code paths")
+
+# ----- 修改: 使用 RISC-V 默认配置，移除 ARM/Cortex-M 特定配置 -----
+# 原 Makefile 中的：
+# DEFAULT_RISCV_ARCH ?= rv32imac
+# DEFAULT_RISCV_ABI  ?= ilp32
+
+set(DEFAULT_RISCV_ARCH "rv32imac" CACHE STRING "Default RISC-V ISA for builds")
+set(DEFAULT_RISCV_ABI  "ilp32"   CACHE STRING "Default RISC-V ABI for builds")
+
+# 将 TARGET_ARCH 设为 RISC-V ISA（默认 rv32imac），并导出 RISCV_ARCH / RISCV_ABI
+set(TARGET_ARCH ${DEFAULT_RISCV_ARCH} CACHE STRING "Target architecture (RISC-V ISA)")
+set(RISCV_ARCH ${TARGET_ARCH} CACHE STRING "RISC-V ISA")
+set(RISCV_ABI  ${DEFAULT_RISCV_ABI} CACHE STRING "RISC-V ABI")
+
+# 工具链选择（保留默认 gcc，可改为 riscv 特定工具链名称）
+set(TOOLCHAIN "gcc" CACHE STRING "Toolchain to use (gcc or riscv-gnu-toolchain)")
+
+# 简化：将 GCC_TARGET_ARCH 对应为 RISCV_ARCH（供后续使用）
+set(GCC_TARGET_ARCH ${RISCV_ARCH})
+
+message(STATUS "Target Architecture (RISC-V): ${TARGET_ARCH}")
+message(STATUS "RISC-V ABI: ${RISCV_ABI}")
+message(STATUS "Toolchain: ${TOOLCHAIN}")
+
+# 确保变量在父作用域可见（移除 ARM 相关导出，加入 RISCV 相关导出）
+set(OPTIMIZED_KERNEL_DIR ${OPTIMIZED_KERNEL_DIR} PARENT_SCOPE)
+set(OPTIMIZED_KERNEL_DIR_PREFIX ${OPTIMIZED_KERNEL_DIR_PREFIX} PARENT_SCOPE)
+set(OPTIMIZED_SIGNAL_KERNEL_DIR_PREFIX ${OPTIMIZED_SIGNAL_KERNEL_DIR_PREFIX} PARENT_SCOPE)
+set(CO_PROCESSOR ${CO_PROCESSOR} PARENT_SCOPE)
+set(OPTIMIZE_KERNELS_FOR ${OPTIMIZE_KERNELS_FOR} PARENT_SCOPE)
+set(EXTERNAL_DIR ${EXTERNAL_DIR} PARENT_SCOPE)
+set(TARGET_ARCH ${TARGET_ARCH} PARENT_SCOPE)
+set(TOOLCHAIN ${TOOLCHAIN} PARENT_SCOPE)
+
+# 导出 RISC-V 专用变量
+set(DEFAULT_RISCV_ARCH ${DEFAULT_RISCV_ARCH} PARENT_SCOPE)
+set(DEFAULT_RISCV_ABI ${DEFAULT_RISCV_ABI} PARENT_SCOPE)
+set(RISCV_ARCH ${RISCV_ARCH} PARENT_SCOPE)
+set(RISCV_ABI ${RISCV_ABI} PARENT_SCOPE)
+set(GCC_TARGET_ARCH ${GCC_TARGET_ARCH} PARENT_SCOPE)

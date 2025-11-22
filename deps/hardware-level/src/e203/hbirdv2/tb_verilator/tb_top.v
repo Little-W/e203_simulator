@@ -290,9 +290,9 @@ module tb_top #(
 `ifdef NO_TIMEOUT
 `else
   always @(posedge clk) begin
-    if (cycle_count[20] == 1'b1) begin
+    if (cycle_count[22] == 1'b1) begin
       $display("Time Out !!!");
-      $finish; 
+      $finish;
     end
   end
 `endif

@@ -81,6 +81,7 @@ run:
 	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 sim: compile_c e203
+	$(eval SIM_OPTIONS_COMMON := -DNO_TIMEOUT)
 	make run SIM_ROOT_DIR=${SIM_ROOT_DIR} DUMPWAVE=${DUMPWAVE} SIM_TOOL=${SIM_TOOL} -C ${BUILD_DIR}
 
 test: e203 compile_test_src

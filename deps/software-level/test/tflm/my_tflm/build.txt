@@ -1,0 +1,19 @@
+构建说明（示例命令，按需替换交叉编译器前缀）
+1) 本机 gcc 构建：
+   mkdir -p build && cd build
+   cmake -DCMAKE_BUILD_TYPE=Release -DTARGET_ARCH=rv32imac -DRISCV_ABI=ilp32 -DTOOLCHAIN=gcc ..
+   cmake --build . -- -j$(nproc)
+
+2) 使用 RISC-V 交叉编译器（替换为系统中实际的前缀，如 riscv64-unknown-elf-）：
+   mkdir -p build && cd build
+   cmake -DCMAKE_BUILD_TYPE=Release -DTARGET_ARCH=rv32imac -DRISCV_ABI=ilp32 -DTOOLCHAIN=gcc \
+     -DCMAKE_C_COMPILER=riscv64-unknown-elf-gcc -DCMAKE_CXX_COMPILER=riscv64-unknown-elf-g++ ..
+   cmake --build . -- -j$(nproc)
+
+3) 使用 Ninja：
+   mkdir -p build && cd build
+   cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DTARGET_ARCH=rv32imac -DRISCV_ABI=ilp32 -DTOOLCHAIN=gcc ..
+   ninja -j$(nproc)
+
+4) 清理：
+   rm -rf build

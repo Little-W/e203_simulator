@@ -17,7 +17,7 @@ TRUE_SIM_TOOL := $(shell echo ${SIM_TOOL} | grep -o '[^0-9]*')
 ifeq ($(TRUE_SIM_TOOL),verilator)
 VERILATOR_BUILD_DIR := ${BUILD_DIR}/verilator_build
 SIM_OPTIONS   := --Mdir ${VERILATOR_BUILD_DIR} 
-SIM_OPTIONS   += --cc +incdir+${VSRC_DIR}/core  -CFLAGS -I${VSRC_DIR}/core +incdir+${VSRC_DIR}/perips/ -CFLAGS -I${VSRC_DIR}/perips
+SIM_OPTIONS   += --cc +incdir+${VSRC_DIR}/core  -CFLAGS -I${VSRC_DIR}/core +incdir+${VSRC_DIR}/perips/ -CFLAGS -I${VSRC_DIR}/perips -I${VSRC_DIR}/subsys/eai/inc/
 SIM_OPTIONS   += +incdir+${VSRC_DIR}/perips/apb_i2c/ -CFLAGS -I${VSRC_DIR}/perips/apb_i2c/
 SIM_OPTIONS   += --exe --trace --trace-structs --trace-params --trace-max-array 1024
 SIM_OPTIONS   += -CFLAGS "-Wall -DTOPLEVEL_NAME=tb_top -g -O0" -LDFLAGS "-pthread -lutil -lelf"
@@ -26,7 +26,7 @@ SIM_OPTIONS   +=  -Wno-PINCONNECTEMPTY -Wno-fatal -Wno-WIDTH -Wno-CASEINCOMPLETE
 ifeq ($(SIM_TOOL),verilator5)
 SIM_OPTIONS   += --no-timing
 endif
-SIM_OPTIONS_BACK := --top-module tb_top --exe -DE203_XLEN=32 -DDISABLE_SV_ASSERTION=1 -DE203_CFG_ITCM_ADDR_WIDTH=20
+SIM_OPTIONS_BACK := --top-module tb_top --exe -DE203_XLEN=32 -DDISABLE_SV_ASSERTION=1 -DE203_CFG_ITCM_ADDR_WIDTH=20 -DSIMULATION=1
 SIM_OPTIONS_BACK   += ${SIM_OPTIONS_COMMON}
 VTB_DIR      := ${BUILD_DIR}/${CORE}_tb/tb_verilator
 VERILATOR_CC_FILE := ${VTB_DIR}/tb_top.cc
@@ -38,11 +38,11 @@ SIM_OPTIONS   += +incdir+"${VSRC_DIR}/core/"+"${VSRC_DIR}/perips/"+"${VSRC_DIR}/
 SIM_OPTIONS   += ${SIM_OPTIONS_COMMON}
 endif
 ifeq ($(TRUE_SIM_TOOL),iverilog)
-SIM_OPTIONS   := -o vvp.exec -I "${VSRC_DIR}/core/" -I "${VSRC_DIR}/perips/" -I "${VSRC_DIR}/perips/apb_i2c/" -D DISABLE_SV_ASSERTION=1 -g2005-sv
+SIM_OPTIONS   := -o vvp.exec -I "${VSRC_DIR}/core/" -I "${VSRC_DIR}/subsys/eai/inc/" -I "${VSRC_DIR}/perips/" -I "${VSRC_DIR}/perips/apb_i2c/" -D DISABLE_SV_ASSERTION=1 -g2005-sv
 SIM_OPTIONS   += ${SIM_OPTIONS_COMMON}
 endif
 
-RTL_V_FILES		:= $(wildcard ${VSRC_DIR}/*/*.v ${VSRC_DIR}/*/*/*.v)
+RTL_V_FILES		:= $(shell find ${VSRC_DIR} -name "*.svh") $(wildcard ${VSRC_DIR}/*/*.v ${VSRC_DIR}/*/*/*.v ${VSRC_DIR}/*/*/*/*.v ${VSRC_DIR}/*/*.sv ${VSRC_DIR}/*/*/*.sv ${VSRC_DIR}/*/*/*/*.sv)
 TB_V_FILES		:= $(wildcard ${VTB_DIR}/*.v)
 
 ifeq ($(SMIC130LL),1)
@@ -274,5 +274,5 @@ debug_gdb:
 	gvim -p ${PROGRAM}.dump &
 	${GDB} -ex "set remotetimeout 14000" -ex "target extended-remote localhost:3333"  -ex "info reg" ${PROGRAM}.elf
 
-.PHONY: run 
+.PHONY: run
 
