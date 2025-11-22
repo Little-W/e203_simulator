@@ -246,10 +246,11 @@ module e203_lsu_ctrl(
 
 
 `ifdef E203_HAS_NICE//{
-  wire [`E203_XLEN_MW-1:0] nice_icb_cmd_wr_mask = 
-            ({`E203_XLEN_MW{nice_icb_cmd_size == 2'b00 }} & (4'b0001 << nice_icb_cmd_addr[1:0]))
-          | ({`E203_XLEN_MW{nice_icb_cmd_size == 2'b01 }} & (4'b0011 << {nice_icb_cmd_addr[1],1'b0}))
-          | ({`E203_XLEN_MW{nice_icb_cmd_size == 2'b10 }} & (4'b1111));
+  // wire [`E203_XLEN_MW-1:0] nice_icb_cmd_wr_mask =
+          //   ({`E203_XLEN_MW{nice_icb_cmd_size == 2'b00 }} & (4'b0001 << nice_icb_cmd_addr[1:0]))
+          // | ({`E203_XLEN_MW{nice_icb_cmd_size == 2'b01 }} & (4'b0011 << {nice_icb_cmd_addr[1],1'b0}))
+          // | ({`E203_XLEN_MW{nice_icb_cmd_size == 2'b10 }} & (4'b1111));
+  wire [`E203_XLEN_MW-1:0] nice_icb_cmd_wr_mask = nice_icb_cmd_wmask;
 `endif//}
 
   wire                  pre_agu_icb_rsp_valid;

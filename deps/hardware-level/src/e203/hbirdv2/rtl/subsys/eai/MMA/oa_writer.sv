@@ -105,33 +105,33 @@
 module oa_writer #(
     parameter integer VLEN = 16,
     parameter int unsigned DATA_WIDTH = 8,
-    parameter int unsigned REG_WIDTH  = 32
-)(
-    input  wire                        clk,
-    input  wire                        rst_n,
+    parameter int unsigned REG_WIDTH = 32
+) (
+    input wire clk,
+    input wire rst_n,
 
     // Config
-    input  wire                        init_cfg,
+    input  wire init_cfg,
     // write_oa_trigger is deprecated; start is driven by FIFO request
     // input  wire                        write_oa_trigger,
-    output reg                         write_oa_req,
-    input  wire                        write_oa_granted,
+    output reg  write_oa_req,
+    input  wire write_oa_granted,
 
-    input  wire [REG_WIDTH-1:0]        dst_base,
-    input  wire [REG_WIDTH-1:0]        dst_row_stride_b,
-    input  wire [REG_WIDTH-1:0]        k,
-    input  wire [REG_WIDTH-1:0]        m,
+    input wire [REG_WIDTH-1:0] dst_base,
+    input wire [REG_WIDTH-1:0] dst_row_stride_b,
+    input wire [REG_WIDTH-1:0] k,
+    input wire [REG_WIDTH-1:0] m,
 
     // Handshake to FIFO
-    input wire oa_fifo_req,
-    output wire [$clog2(VLEN)-1:0]     vec_valid_num_col,
+    input  wire                    oa_fifo_req,
+    output wire [$clog2(VLEN)-1:0] vec_valid_num_col,
 
     // Data in
-    input  wire                        output_valid,
-    input  wire                        switch_row,
-    output wire                        output_ready,
-    input  wire [3:0]                  output_mask,
-    input  wire [31:0]                 output_data,
+    input  wire        output_valid,
+    input  wire        switch_row,
+    output wire        output_ready,
+    input  wire [ 3:0] output_mask,
+    input  wire [31:0] output_data,
 
     // ICB 主接口（模块作为 Master��?
     output icb_ext_cmd_m_t icb_ext_cmd_m,  // Master -> Slave: 命令有效载荷
@@ -142,332 +142,331 @@ module oa_writer #(
     output icb_ext_rsp_m_t icb_ext_rsp_m,  // Master -> Slave: 响应就绪
 
     // Status
-    output reg                         write_done,
-    output wire                        oa_calc_over
+    output wire write_done,
+    output wire oa_calc_over
 );
 
-    //========================
-    // Local params and cfg
-    //========================
-    localparam integer VCOL_W = $clog2(VLEN);
+  //========================
+  // Local params and cfg
+  //========================
+  localparam integer VCOL_W = $clog2(VLEN);
 
 
-    assign icb_ext_rsp_m = '{ rsp_ready: 1'b1 };
+  assign icb_ext_rsp_m = '{rsp_ready: 1'b1};
 
-    reg [REG_WIDTH-1:0] cfg_dst_base;
-    reg [REG_WIDTH-1:0] cfg_dst_row_stride_b;
-    reg [REG_WIDTH-1:0] cfg_k;
-    reg [REG_WIDTH-1:0] cfg_m;
-    reg [REG_WIDTH-1:0] cfg_tile_count;
-    reg                  cfg_lat_tick; // one-cycle tick after init_cfg to use latched cfg_*
+  reg [REG_WIDTH-1:0] cfg_dst_base;
+  reg [REG_WIDTH-1:0] cfg_dst_row_stride_b;
+  reg [REG_WIDTH-1:0] cfg_k;
+  reg [REG_WIDTH-1:0] cfg_m;
+  reg [REG_WIDTH-1:0] cfg_tile_count;
+  reg                 cfg_lat_tick;  // one-cycle tick after init_cfg to use latched cfg_*
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            cfg_dst_base        <= '0;
-            cfg_dst_row_stride_b<= '0;
-            cfg_k               <= '0;
-            cfg_m               <= '0;
-            cfg_tile_count      <= '0;
-            cfg_lat_tick        <= 1'b0;
-        end else if (init_cfg) begin
-            cfg_dst_base        <= dst_base;
-            cfg_dst_row_stride_b<= dst_row_stride_b;
-            cfg_k               <= k;
-            cfg_m               <= m;
-            cfg_tile_count      <= (((k + VLEN-1) >> VCOL_W))*(((m + VLEN-1) >> VCOL_W)); // tile_count = (k/16)*(m/16), but we use k*m/16 since we process 16 cols at a time
-            cfg_lat_tick        <= 1'b1; // raise tick; will be consumed next cycle
-        end else begin
-            cfg_lat_tick        <= 1'b0;
-        end
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      cfg_dst_base         <= '0;
+      cfg_dst_row_stride_b <= '0;
+      cfg_k                <= '0;
+      cfg_m                <= '0;
+      cfg_tile_count       <= '0;
+      cfg_lat_tick         <= 1'b0;
+    end else if (init_cfg) begin
+      cfg_dst_base <= dst_base;
+      cfg_dst_row_stride_b <= dst_row_stride_b;
+      cfg_k <= k;
+      cfg_m <= m;
+      cfg_tile_count      <= (((k + VLEN-1) >> VCOL_W))*(((m + VLEN-1) >> VCOL_W)); // tile_count = (k/16)*(m/16), but we use k*m/16 since we process 16 cols at a time
+      cfg_lat_tick <= 1'b1;  // raise tick; will be consumed next cycle
+    end else begin
+      cfg_lat_tick <= 1'b0;
     end
+  end
 
-    //========================
-    //========================
-    // Tile/row bookkeeping
-    //========================
-    reg [31:0]                tiles_done;
-    reg [31:0]                tile_row_idx;
-    reg [31:0]                tile_col_idx;
-    reg [VCOL_W-1:0]          row_in_tile;
-    reg [REG_WIDTH-1:0]       row_tile_base_addr; // start of current tile-row (col=0)
-    reg [REG_WIDTH-1:0]       tile_base_addr;     // start of current tile (row/col)
-    reg [REG_WIDTH-1:0]       cur_addr;           // current write address
+  //========================
+  //========================
+  // Tile/row bookkeeping
+  //========================
+  reg  [         31:0] tiles_done;
+  reg  [         31:0] tile_row_idx;
+  reg  [         31:0] tile_col_idx;
+  reg  [   VCOL_W-1:0] row_in_tile;
+  reg  [REG_WIDTH-1:0] row_tile_base_addr;  // start of current tile-row (col=0)
+  reg  [REG_WIDTH-1:0] tile_base_addr;  // start of current tile (row/col)
+  reg  [REG_WIDTH-1:0] cur_addr;  // current write address
 
-    reg [VCOL_W:0]            rows_valid_cur_tile; // 0..16
-    reg [VCOL_W:0]            cols_valid_cur_tile; // 0..16
-    reg [VCOL_W:0]            beats_per_row;       // ceil(cols/4)
-    reg [VCOL_W:0]            beats_in_row;        // progressed beats in current row
+  reg  [     VCOL_W:0] rows_valid_cur_tile;  // 0..16
+  reg  [     VCOL_W:0] cols_valid_cur_tile;  // 0..16
+  reg  [     VCOL_W:0] beats_per_row;  // ceil(cols/4)
+  reg  [     VCOL_W:0] beats_in_row;  // progressed beats in current row
 
-    // Handshake implementation with oa_fifo_req falling-edge update
-    reg [VCOL_W-1:0] vec_valid_num_col_r;
-    reg [VCOL_W-1:0] vec_next_m1;
-    reg              vec_pending;
-    reg              oa_fifo_req_q;
-    wire             oa_fifo_req_fall = oa_fifo_req_q & ~oa_fifo_req;
+  // Handshake implementation with oa_fifo_req falling-edge update
+  reg  [   VCOL_W-1:0] vec_valid_num_col_r;
+  reg  [   VCOL_W-1:0] vec_next_m1;
+  reg                  vec_pending;
+  reg                  oa_fifo_req_q;
+  wire                 oa_fifo_req_fall = oa_fifo_req_q & ~oa_fifo_req;
+  reg                  oa_fifo_req_fall_d;
 
-    // Preview-next indices for vec_valid publication (col-first order)
-    reg [31:0]       vpub_next_row_idx;
-    reg [31:0]       vpub_next_col_idx;
-    assign vec_valid_num_col = vec_valid_num_col_r;
+  // Preview-next indices for vec_valid publication (col-first order)
+  reg  [         31:0] vpub_next_row_idx;
+  reg  [         31:0] vpub_next_col_idx;
+  assign vec_valid_num_col = vec_valid_num_col_r;
 
-    // sample for edge detection
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            oa_fifo_req_q <= 1'b0;
-        end else begin
-            oa_fifo_req_q <= oa_fifo_req;
-        end
+  // sample for edge detection
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      oa_fifo_req_q <= 1'b0;
+    end else begin
+      oa_fifo_req_q <= oa_fifo_req;
     end
+  end
 
-    //========================
-    // Helpers (Verilog-2001 style)
-    //========================
-    function [VCOL_W:0] min16;
-        input [REG_WIDTH-1:0] val;
-        begin
-            if (val >= VLEN) min16 = VLEN; else min16 = val[VCOL_W:0];
+  //========================
+  // Helpers (Verilog-2001 style)
+  //========================
+  function [VCOL_W:0] min16;
+    input [REG_WIDTH-1:0] val;
+    begin
+      if (val >= VLEN) min16 = VLEN;
+      else min16 = val[VCOL_W:0];
+    end
+  endfunction
+
+  function [REG_WIDTH-1:0] rem_after_tiles;
+    input [REG_WIDTH-1:0] total;
+    input [REG_WIDTH-1:0] tile_idx;
+    reg [REG_WIDTH-1:0] consumed;
+    begin
+      consumed = (tile_idx << VCOL_W);
+      rem_after_tiles = (total > consumed) ? (total - consumed) : '0;
+    end
+  endfunction
+  //========================
+
+  //========================
+  // FSM
+  //========================
+  // FSM: explicit wait-for-grant stage to ensure per-tile bus re-acquire
+  localparam [1:0] S_IDLE = 2'b00, S_WAIT = 2'b01, S_WRITE = 2'b10;
+  reg [1:0] state;
+  reg has_grant;  // asserted after write_oa_granted until tile release
+  reg cmd_pending;
+  reg row_cmd_sent;
+  wire slave_cmd_ready = icb_ext_cmd_s.ready;
+  wire slave_wr_ready = icb_ext_wr_s.w_ready;
+  wire cmd_valid = (state == S_WRITE) && has_grant && cmd_pending;
+  wire cmd_fire = cmd_valid && slave_cmd_ready;
+  wire row_cmd_ready = row_cmd_sent || cmd_fire;
+  wire       writer_ready_cond = (state == S_WRITE) && has_grant && row_cmd_ready && (beats_in_row < beats_per_row) && slave_wr_ready;
+  assign output_ready = writer_ready_cond;
+  wire       beat_fire = output_valid && writer_ready_cond;
+  wire [2:0] cmd_len_cur = (beats_per_row <= 1) ? 3'b000 : (beats_per_row[2:0] - 3'd1);
+
+  assign icb_ext_cmd_m = '{valid: cmd_valid, addr: cur_addr, read: 1'b0, len: cmd_len_cur};
+
+  assign icb_ext_wr_m  = '{w_valid: output_valid, wdata: output_data, wmask: output_mask};
+  wire [VCOL_W:0] beats_in_row_plus1 = beats_in_row + 1'b1;
+  wire [VCOL_W:0] beats_per_row_m1 = (beats_per_row == '0) ? '0 : (beats_per_row - 1'b1);
+  wire [VCOL_W:0] row_in_tile_plus1 = row_in_tile + 1'b1;
+  wire            last_beat_in_row = beat_fire && (beats_in_row_plus1 >= beats_per_row);
+  wire            last_row_in_tile = (row_in_tile_plus1 >= rows_valid_cur_tile);
+  wire            tile_transfer_done = last_beat_in_row && last_row_in_tile;
+  wire            oa_tiles_done = (tiles_done == cfg_tile_count) && (cfg_tile_count != '0);
+  assign oa_calc_over = oa_tiles_done;
+
+  assign write_done   = tile_transfer_done;
+
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      state               <= S_IDLE;
+      write_oa_req        <= 1'b0;
+      tiles_done          <= '0;
+      tile_row_idx        <= '0;
+      tile_col_idx        <= '0;
+      row_in_tile         <= '0;
+      row_tile_base_addr  <= '0;
+      tile_base_addr      <= '0;
+      cur_addr            <= '0;
+      rows_valid_cur_tile <= '0;
+      cols_valid_cur_tile <= '0;
+      has_grant           <= 1'b0;
+      cmd_pending         <= 1'b0;
+      row_cmd_sent        <= 1'b0;
+      // vec_valid handshake reset
+      vec_valid_num_col_r <= '0;
+      vec_next_m1         <= '0;
+      vec_pending         <= 1'b0;
+      vpub_next_row_idx   <= '0;
+      vpub_next_col_idx   <= '0;
+    end else begin
+      // one-shots
+      case (state)
+        S_IDLE: begin
+          cmd_pending  <= 1'b0;
+          row_cmd_sent <= 1'b0;
+          if (init_cfg) begin
+            tile_row_idx <= '0;
+            tile_col_idx <= '0;
+            tiles_done   <= '0;
+          end
+
+          // 使用已锁存的 cfg_k 在下一拍发布首?tile ?(cols-1)，并预取下一 tile ?(cols-1)
+          if (cfg_lat_tick) begin : init_vec_valid
+            reg [VCOL_W:0] curr_cols_tmp;
+            reg [VCOL_W:0] next_cols_tmp;
+            integer tile_cols_total_i;
+            reg [31:0] next_col_idx_tmp;
+            curr_cols_tmp = min16(rem_after_tiles(cfg_m, '0));
+            vec_valid_num_col_r <= (curr_cols_tmp == '0) ? {VCOL_W{1'b0}} : (curr_cols_tmp - 1'b1);
+            tile_cols_total_i = (cfg_m + VLEN - 1) >> VCOL_W;
+            if (1 < tile_cols_total_i) begin
+              next_col_idx_tmp = 1;
+            end else begin
+              next_col_idx_tmp = 0;
+            end
+            next_cols_tmp = min16(rem_after_tiles(cfg_m, next_col_idx_tmp[REG_WIDTH-1:0]));
+            vec_next_m1 <= (next_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next_cols_tmp - 1'b1);
+            vec_pending <= 1'b1;
+          end
+
+          // First-tile kick: request the bus as soon as FIFO requests
+          // (no external trigger needed)
+          if (oa_fifo_req) begin
+            write_oa_req <= 1'b1;
+            has_grant    <= 1'b0;
+            state        <= S_WAIT;
+          end
         end
-    endfunction
 
-    function [REG_WIDTH-1:0] rem_after_tiles;
-        input [REG_WIDTH-1:0] total;
-        input [REG_WIDTH-1:0] tile_idx;
-        reg   [REG_WIDTH-1:0] consumed;
-        begin
-            consumed = (tile_idx << VCOL_W);
-            rem_after_tiles = (total > consumed) ? (total - consumed) : '0;
-        end
-    endfunction
-    //========================
+        // Wait for bus grant; once granted, compute current tile params,
+        // publish vec_valid for this tile, then enter WRITE (ready will assert inside WRITE)
+        S_WAIT: begin
+          row_cmd_sent <= 1'b0;
 
-    //========================
-    // FSM
-    //========================
-    // FSM: explicit wait-for-grant stage to ensure per-tile bus re-acquire
-    localparam [1:0] S_IDLE  = 2'b00,
-                     S_WAIT  = 2'b01,
-                     S_WRITE = 2'b10;
-    reg [1:0] state;
-    reg        has_grant; // asserted after write_oa_granted until tile release
-    reg        cmd_pending;
-    reg        row_cmd_sent;
-    wire       slave_cmd_ready   = icb_ext_cmd_s.ready;
-    wire       slave_wr_ready    = icb_ext_wr_s.w_ready;
-    wire       cmd_valid         = (state == S_WRITE) && has_grant && cmd_pending;
-    wire       cmd_fire          = cmd_valid && slave_cmd_ready;
-    wire       row_cmd_ready     = row_cmd_sent || cmd_fire;
-    wire       writer_ready_cond = (state == S_WRITE) && has_grant && row_cmd_ready && (beats_in_row < beats_per_row) && slave_wr_ready;
-    assign output_ready    = writer_ready_cond;
-    wire       beat_fire   = output_valid && writer_ready_cond;
-    wire [2:0] cmd_len_cur = (beats_per_row <= 1) ? 3'b000 : (beats_per_row[2:0] - 3'd1);
+          if (oa_fifo_req) begin
+            write_oa_req <= 1'b1;
+          end
 
-    assign icb_ext_cmd_m = '{
-        valid: cmd_valid,
-        addr:  cur_addr,
-        read:  1'b0,
-        len:   cmd_len_cur
-    };
-
-    assign icb_ext_wr_m = '{
-        w_valid: beat_fire,
-        wdata:   output_data,
-        wmask:   output_mask
-    };
-    wire [VCOL_W:0] beats_in_row_plus1 = beats_in_row + 1'b1;
-    wire [VCOL_W:0] beats_per_row_m1   = (beats_per_row == '0) ? '0 : (beats_per_row - 1'b1);
-    wire [VCOL_W:0] row_in_tile_plus1  = row_in_tile + 1'b1;
-    wire last_beat_in_row              = beat_fire && (beats_in_row_plus1 >= beats_per_row);
-    wire last_row_in_tile              = (row_in_tile_plus1 >= rows_valid_cur_tile);
-    wire tile_transfer_done            = last_beat_in_row && last_row_in_tile;
-    wire oa_tiles_done     = (tiles_done == cfg_tile_count) && (cfg_tile_count != '0);
-    assign oa_calc_over    = oa_tiles_done;
-
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            state               <= S_IDLE;
-            write_done         <= 1'b0;
-            write_oa_req        <= 1'b0;
-            tiles_done          <= '0;
-            tile_row_idx        <= '0;
-            tile_col_idx        <= '0;
-            row_in_tile         <= '0;
-            row_tile_base_addr  <= '0;
-            tile_base_addr      <= '0;
-            cur_addr            <= '0;
-            rows_valid_cur_tile <= '0;
-            cols_valid_cur_tile <= '0;
-            has_grant           <= 1'b0;
-            cmd_pending         <= 1'b0;
-            row_cmd_sent        <= 1'b0;
-            // vec_valid handshake reset
-            vec_valid_num_col_r <= '0;
-            vec_next_m1         <= '0;
-            vec_pending         <= 1'b0;
-            vpub_next_row_idx   <= '0;
-            vpub_next_col_idx   <= '0;
-        end else begin
-            // one-shots
-            write_done        <= 1'b0;
-            // one-shots
-            case (state)
-                S_IDLE: begin
-                    cmd_pending  <= 1'b0;
-                    row_cmd_sent <= 1'b0;
-                    if (init_cfg) begin
-                        tile_row_idx       <= '0;
-                        tile_col_idx       <= '0;
-                        tiles_done         <= '0;
-                    end
-
-                    // 使用已锁存的 cfg_k 在下一拍发布首?tile ?(cols-1)，并预取下一 tile ?(cols-1)
-                    if (cfg_lat_tick) begin : init_vec_valid
-                        reg [VCOL_W:0] curr_cols_tmp;
-                        reg [VCOL_W:0] next_cols_tmp;
-                        integer tile_cols_total_i;
-                        reg [31:0] next_col_idx_tmp;
-                        curr_cols_tmp = min16(rem_after_tiles(cfg_m, '0));
-                        vec_valid_num_col_r <= (curr_cols_tmp == '0) ? {VCOL_W{1'b0}} : (curr_cols_tmp - 1'b1);
-                        tile_cols_total_i   = (cfg_m + VLEN - 1) >> VCOL_W;
-                        if (1 < tile_cols_total_i) begin
-                            next_col_idx_tmp = 1;
-                        end else begin
-                            next_col_idx_tmp = 0;
-                        end
-                        next_cols_tmp       = min16(rem_after_tiles(cfg_m, next_col_idx_tmp[REG_WIDTH-1:0]));
-                        vec_next_m1         <= (next_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next_cols_tmp - 1'b1);
-                        vec_pending         <= 1'b1;
-                    end
-
-                    // First-tile kick: request the bus as soon as FIFO requests
-                    // (no external trigger needed)
-                    if (oa_fifo_req) begin
-                        write_oa_req <= 1'b1;
-                        has_grant    <= 1'b0;
-                        state        <= S_WAIT;
-                    end
-                end
-
-                // Wait for bus grant; once granted, compute current tile params,
-                // publish vec_valid for this tile, then enter WRITE (ready will assert inside WRITE)
-                S_WAIT: begin
-                    row_cmd_sent <= 1'b0;
-                    if (oa_tiles_done) begin
-                        state <= S_IDLE;
-                    end else if (write_oa_granted && write_oa_req) begin
-                        // Latch tile geometry for current indices
-                        rows_valid_cur_tile <= min16(rem_after_tiles(cfg_k, tile_row_idx));
-                        cols_valid_cur_tile <= min16(rem_after_tiles(cfg_m, tile_col_idx));
-                        row_tile_base_addr  <= cfg_dst_base + ((tile_row_idx << VCOL_W) * cfg_dst_row_stride_b);
-                        tile_base_addr      <= cfg_dst_base + ((tile_row_idx << VCOL_W) * cfg_dst_row_stride_b)
+          if (oa_tiles_done) begin
+            state <= S_IDLE;
+          end else if (write_oa_granted) begin
+            // Latch tile geometry for current indices
+            rows_valid_cur_tile <= min16(rem_after_tiles(cfg_k, tile_row_idx));
+            cols_valid_cur_tile <= min16(rem_after_tiles(cfg_m, tile_col_idx));
+            row_tile_base_addr <= cfg_dst_base + ((tile_row_idx << VCOL_W) * cfg_dst_row_stride_b);
+            tile_base_addr      <= cfg_dst_base + ((tile_row_idx << VCOL_W) * cfg_dst_row_stride_b)
                                               + (tile_col_idx << VCOL_W);
-                        cur_addr            <= cfg_dst_base + ((tile_row_idx << VCOL_W) * cfg_dst_row_stride_b)
+            cur_addr            <= cfg_dst_base + ((tile_row_idx << VCOL_W) * cfg_dst_row_stride_b)
                                               + (tile_col_idx << VCOL_W);
-                        row_in_tile         <= '0;
-                        beats_per_row       <= (min16(rem_after_tiles(cfg_m, tile_col_idx)) + 3) >> 2;
-                        beats_in_row        <= '0;
-                        cmd_pending         <= 1'b1;
-                        row_cmd_sent        <= 1'b0;
+            row_in_tile <= '0;
+            beats_per_row <= (min16(rem_after_tiles(cfg_m, tile_col_idx)) + 3) >> 2;
+            beats_in_row <= '0;
+            cmd_pending <= 1'b1;
+            row_cmd_sent <= 1'b0;
 
-                        // Publish current tile's (cols-1) immediately so FIFO knows how many bytes per row
-                        begin : vec_valid_prep_wait
-                            reg [VCOL_W:0] curr_cols_tmp;
-                            reg [VCOL_W:0] next_cols_tmp;
-                            integer tile_cols_total_i;
-                            reg [31:0] next_col_idx_tmp;
-                            curr_cols_tmp = min16(rem_after_tiles(cfg_m, tile_col_idx));
-                            vec_valid_num_col_r <= (curr_cols_tmp == '0) ? {VCOL_W{1'b0}} : (curr_cols_tmp - 1'b1);
-                            tile_cols_total_i   = (cfg_m + VLEN - 1) >> VCOL_W;
-                            if ((tile_col_idx + 1) < tile_cols_total_i) begin
-                                next_col_idx_tmp  = tile_col_idx + 1;
-                                vpub_next_row_idx <= tile_row_idx;
-                                vpub_next_col_idx <= tile_col_idx + 1'b1;
-                            end else begin
-                                next_col_idx_tmp  = 0; // wrap to next row
-                                vpub_next_row_idx <= tile_row_idx + 1'b1;
-                                vpub_next_col_idx <= '0;
-                            end
-                            next_cols_tmp       = min16(rem_after_tiles(cfg_m, next_col_idx_tmp[REG_WIDTH-1:0]));
-                            vec_next_m1         <= (next_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next_cols_tmp - 1'b1);
-                            vec_pending         <= 1'b1;
-                        end
-
-                        state <= S_WRITE; // ready gating handled by writer_ready_cond
-                    end
-                end
-
-                S_WRITE: begin
-                    if (cmd_fire) begin
-                        cmd_pending  <= 1'b0;
-                        row_cmd_sent <= 1'b1;
-                    end
-
-                    if (beat_fire) begin
-                        if (last_beat_in_row) begin
-                            beats_in_row <= '0;
-                        end else if (beats_in_row < beats_per_row_m1) begin
-                            beats_in_row <= beats_in_row + 1'b1;
-                        end else begin
-                            beats_in_row <= beats_per_row_m1;
-                        end
-                    end
-
-                    // Tile complete once final row/beat accepted via FIFO tracking
-                    if (tile_transfer_done) begin
-                        state        <= S_WAIT;
-                        tiles_done   <= tiles_done + 1'b1;
-                        write_done   <= 1'b1;
-                        if (tiles_done + 1'b1 < cfg_tile_count) begin
-                            if (tile_col_idx + 1 < ((cfg_m + VLEN - 1) >> VCOL_W)) begin
-                                tile_col_idx <= tile_col_idx + 1'b1;
-                            end else begin
-                                tile_col_idx       <= '0;
-                                tile_row_idx       <= tile_row_idx + 1'b1;
-                                row_tile_base_addr <= row_tile_base_addr + (cfg_dst_row_stride_b << VCOL_W);
-                            end
-                            write_oa_req <= 1'b1;
-                            has_grant    <= 1'b0;
-                        end else begin
-                            write_oa_req <= 1'b0;
-                            has_grant    <= 1'b0;
-                        end
-                    end
-                    if (beat_fire && switch_row) begin
-                        row_in_tile <= row_in_tile + 1'b1;
-                        cur_addr    <= tile_base_addr + (row_in_tile_plus1 * cfg_dst_row_stride_b);
-                        row_cmd_sent <= 1'b0;
-                        if (!tile_transfer_done) begin
-                            cmd_pending <= 1'b1;
-                        end
-                    end
-
-                end
-            endcase
-            // Publish new vec_valid when upstream deasserts oa_fifo_req (falling edge)
-            if (oa_fifo_req_fall) begin
-                integer tile_cols_total_i;
-                reg [VCOL_W:0] next2_cols_tmp;
-                vec_valid_num_col_r <= vec_next_m1;
-                tile_cols_total_i = (cfg_m + VLEN - 1) >> VCOL_W;
-                // advance vpub_next_* to following tile (col-first)
-                if ((vpub_next_col_idx + 1) < tile_cols_total_i) begin
-                    vpub_next_col_idx <= vpub_next_col_idx + 1'b1;
-                    // same row
-                end else begin
-                    vpub_next_col_idx <= '0;
-                    vpub_next_row_idx <= vpub_next_row_idx + 1'b1;
-                end
-                // recompute next mask for the new vpub_next_* index
-                next2_cols_tmp      = min16(rem_after_tiles(cfg_m, vpub_next_col_idx));
-                vec_next_m1         <= (next2_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next2_cols_tmp - 1'b1);
+            // Publish current tile's (cols-1) immediately so FIFO knows how many bytes per row
+            begin : vec_valid_prep_wait
+              reg [VCOL_W:0] curr_cols_tmp;
+              reg [VCOL_W:0] next_cols_tmp;
+              integer tile_cols_total_i;
+              reg [31:0] next_col_idx_tmp;
+              curr_cols_tmp = min16(rem_after_tiles(cfg_m, tile_col_idx));
+              vec_valid_num_col_r <= (curr_cols_tmp == '0) ? {VCOL_W{1'b0}} : (curr_cols_tmp - 1'b1);
+              tile_cols_total_i = (cfg_m + VLEN - 1) >> VCOL_W;
+              if ((tile_col_idx + 1) < tile_cols_total_i) begin
+                next_col_idx_tmp = tile_col_idx + 1;
+                vpub_next_row_idx <= tile_row_idx;
+                vpub_next_col_idx <= tile_col_idx + 1'b1;
+              end else begin
+                next_col_idx_tmp = 0;  // wrap to next row
+                vpub_next_row_idx <= tile_row_idx + 1'b1;
+                vpub_next_col_idx <= '0;
+              end
+              next_cols_tmp = min16(rem_after_tiles(cfg_m, next_col_idx_tmp[REG_WIDTH-1:0]));
+              vec_next_m1 <= (next_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next_cols_tmp - 1'b1);
+              vec_pending <= 1'b1;
             end
 
-            // 授权采样：获得授权后清请求并标记拥有总线
-            if (write_oa_granted) begin
-                has_grant    <= 1'b1;
-                write_oa_req <= 1'b0;
-            end
+            state <= S_WRITE;  // ready gating handled by writer_ready_cond
+          end
         end
+
+        S_WRITE: begin
+          if (cmd_fire) begin
+            cmd_pending  <= 1'b0;
+            row_cmd_sent <= 1'b1;
+          end
+
+          if (beat_fire) begin
+            if (last_beat_in_row) begin
+              beats_in_row <= '0;
+            end else if (beats_in_row < beats_per_row_m1) begin
+              beats_in_row <= beats_in_row + 1'b1;
+            end else begin
+              beats_in_row <= beats_per_row_m1;
+            end
+          end
+
+          // 授权采样：获得授权后清请求并标记拥有总线
+          if (write_oa_granted) begin
+            has_grant    <= 1'b1;
+            write_oa_req <= 1'b0;
+          end
+
+          // Tile complete once final row/beat accepted via FIFO tracking
+          if (tile_transfer_done) begin
+            state      <= S_WAIT;
+            tiles_done <= tiles_done + 1'b1;
+            if (tiles_done + 1'b1 < cfg_tile_count) begin
+              if (tile_col_idx + 1 < ((cfg_m + VLEN - 1) >> VCOL_W)) begin
+                tile_col_idx <= tile_col_idx + 1'b1;
+              end else begin
+                tile_col_idx       <= '0;
+                tile_row_idx       <= tile_row_idx + 1'b1;
+                row_tile_base_addr <= row_tile_base_addr + (cfg_dst_row_stride_b << VCOL_W);
+              end
+              has_grant <= 1'b0;
+            end else begin
+              has_grant <= 1'b0;
+            end
+          end
+          if (beat_fire && switch_row) begin
+            row_in_tile <= row_in_tile + 1'b1;
+            cur_addr    <= tile_base_addr + (row_in_tile_plus1 * cfg_dst_row_stride_b);
+            row_cmd_sent <= 1'b0;
+            if (!tile_transfer_done) begin
+              cmd_pending <= 1'b1;
+            end
+          end
+
+        end
+      endcase
+      // Publish new vec_valid when upstream deasserts oa_fifo_req (falling edge)
+      if (oa_fifo_req_fall_d) begin
+        integer tile_cols_total_i;
+        reg [VCOL_W:0] next2_cols_tmp;
+        vec_valid_num_col_r <= vec_next_m1;
+        tile_cols_total_i = (cfg_m + VLEN - 1) >> VCOL_W;
+        // advance vpub_next_* to following tile (col-first)
+        if ((vpub_next_col_idx + 1) < tile_cols_total_i) begin
+          vpub_next_col_idx <= vpub_next_col_idx + 1'b1;
+          // same row
+        end else begin
+          vpub_next_col_idx <= '0;
+          vpub_next_row_idx <= vpub_next_row_idx + 1'b1;
+        end
+        // recompute next mask for the new vpub_next_* index
+        next2_cols_tmp = min16(rem_after_tiles(cfg_m, vpub_next_col_idx));
+        vec_next_m1 <= (next2_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next2_cols_tmp - 1'b1);
+      end
     end
+  end
+
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      oa_fifo_req_fall_d <= 1'b0;
+    end else begin
+      oa_fifo_req_fall_d <= oa_fifo_req_fall;
+    end
+  end
 
 endmodule

@@ -478,6 +478,7 @@ module e203_cpu #(
    /* input */ wire                   nice_icb_cmd_read        ;  
    /* input */ wire [`E203_XLEN-1:0]  nice_icb_cmd_wdata       ;
    /* input */ wire [1:0]             nice_icb_cmd_size        ; 
+    /* input */ wire [`E203_XLEN/8-1:0] nice_icb_cmd_wmask      ;
 
    /* output*/ wire  nice_icb_rsp_valid                        ; 
    /* input */ wire  nice_icb_rsp_ready                        ;
@@ -508,6 +509,7 @@ module e203_cpu #(
     .nice_icb_cmd_read    (nice_icb_cmd_read),
     .nice_icb_cmd_wdata   (nice_icb_cmd_wdata),
     .nice_icb_cmd_size    (nice_icb_cmd_size),
+    .nice_icb_cmd_wmask   (nice_icb_cmd_wmask),
     
     .nice_icb_rsp_valid   (nice_icb_rsp_valid),
     .nice_icb_rsp_ready   (nice_icb_rsp_ready),
@@ -760,6 +762,7 @@ module e203_cpu #(
     .nice_icb_cmd_read   (nice_icb_cmd_read ), //I: nice access type. 
     .nice_icb_cmd_wdata  (nice_icb_cmd_wdata),//I: nice write data.
     .nice_icb_cmd_size   (nice_icb_cmd_size), //I: data size input.
+    .nice_icb_cmd_wmask  (nice_icb_cmd_wmask), // I: write byte enable.
 
     // lsu_rsp interface                                         
     .nice_icb_rsp_valid  (nice_icb_rsp_valid), // O: main core responds result to nice.

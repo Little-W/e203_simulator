@@ -3,7 +3,7 @@
 `include "e203_defines.v"
 
 module tb_top #(
-    parameter [63:0] DUMP_START = 64'd0,
+    parameter [63:0] DUMP_START = 64'hFFFFFFFFFFFF,
     parameter [63:0] DUMP_END   = 64'hFFFFFFFFFFFFFFFF
 ) (
      input clk,
@@ -22,6 +22,7 @@ module tb_top #(
   `define ITCM `CPU_TOP.u_e203_srams.u_e203_itcm_ram.u_e203_itcm_gnrl_ram.u_sirv_sim_ram
   `define DTCM `CPU_TOP.u_e203_srams.u_e203_dtcm_ram.u_e203_dtcm_gnrl_ram.u_sirv_sim_ram
   `define EXT_RAM u_e203_soc_top.u_sram_icb.u_sram.u_sirv_sim_ram
+  `define is_mult_t `CPU_TOP.u_e203_cpu.u_e203_nice_core.u_decode_dispatch.is_mat_mult_t
 
   `define PC_WRITE_TOHOST       `E203_PC_SIZE'h80000042
   `define PC_EXT_IRQ_BEFOR_MRET `E203_PC_SIZE'h800000a6
@@ -40,6 +41,10 @@ module tb_top #(
   // Add PC stall detection registers
   reg [`E203_PC_SIZE-1:0] prev_pc;
   reg [6:0] pc_stall_cnt; // 7-bit counter for up to 127 cycles
+
+  // Add registers for dynamic dump start based on is_mult_t
+  reg mult_detected;
+  reg [63:0] dynamic_dump_start;
 
   wire lfextclk;
   reg [5:0] cnt;
@@ -70,6 +75,7 @@ module tb_top #(
       // default from module parameters; plusargs can override
       dump_start = DUMP_START;
       dump_end   = DUMP_END;
+      dynamic_dump_start = dump_start; // Initialize dynamic_dump_start
       if ($value$plusargs("dump_start=%d", dump_start)) begin
           $display("dump_start overridden by plusarg: %0d", dump_start);
       end else begin
@@ -82,13 +88,24 @@ module tb_top #(
       end
   end
 
+  // Add always block to detect is_mult_t and set dynamic_dump_start
+  always @(posedge clk or negedge rst_n) begin
+      if (rst_n == 1'b0) begin
+          mult_detected <= 1'b0;
+          dynamic_dump_start <= dump_start;
+      end else if (`is_mult_t && !mult_detected) begin
+          mult_detected <= 1'b1;
+          dynamic_dump_start <= cycle;
+      end
+  end
+
   // update dump_en based on cycle_count
   always @(posedge clk or negedge rst_n) begin
       if (rst_n == 1'b0) begin
           dump_en <= 1'b0;
       end else begin
-          // use 64-bit cycle CSR to decide dumping window
-          if ((cycle >= dump_start) && (cycle <= dump_end))
+          // use dynamic_dump_start to decide dumping window
+          if ((cycle >= dynamic_dump_start) && (cycle <= dump_end))
             dump_en <= 1'b1;
           else
             dump_en <= 1'b0;
@@ -288,13 +305,13 @@ module tb_top #(
 
   // watchdog
 `ifdef NO_TIMEOUT
-`else
-  always @(posedge clk) begin
-    if (cycle_count[22] == 1'b1) begin
-      $display("Time Out !!!");
-      $finish;
-    end
-  end
+// `else
+//   always @(posedge clk) begin
+//     if (cycle_count[22] == 1'b1) begin
+//       $display("Time Out !!!");
+//       $finish;
+//     end
+//   end
 `endif
 
   integer i;

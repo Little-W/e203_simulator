@@ -27,9 +27,9 @@ ENTRY(_start)
 
 MEMORY
 {
-    ilm     (rxai!w) : ORIGIN = 0x80000000, LENGTH = 64K
+    ilm     (rxai!w) : ORIGIN = 0x80000000, LENGTH = 128K
     extram  (rxai!w) : ORIGIN = 0x00080000, LENGTH = 512K
-    ram     (wxa!ri) : ORIGIN = 0x90000000, LENGTH = 64K
+    ram     (wxa!ri) : ORIGIN = 0x90000000, LENGTH = 128K
 }
 
 SECTIONS
@@ -65,7 +65,7 @@ SECTIONS
     .text_ext :
     {
         *(.text.*)
-    } >extram AT>extram
+    } >ilm AT>ilm
 
     /* 将只保留启动相关 / 关键只读数据放在 ILM */
     .rodata : ALIGN(4)

@@ -298,6 +298,7 @@ module e203_core(
   input                   nice_icb_cmd_read   , //I: nice access type. 
   input [`E203_XLEN-1:0]  nice_icb_cmd_wdata  ,//I: nice write data.
   input [1:0]             nice_icb_cmd_size   , //I: data size input.
+  input [`E203_XLEN/8-1:0] nice_icb_cmd_wmask  , // I: write byte mask.
 
   // lsu_rsp interface                                         
   output                  nice_icb_rsp_valid  , //O: main core responds result to nice.
@@ -737,7 +738,7 @@ module e203_core(
     .nice_icb_cmd_read   (nice_icb_cmd_read ), 
     .nice_icb_cmd_wdata  (nice_icb_cmd_wdata),
     .nice_icb_cmd_size   (nice_icb_cmd_size), 
-    .nice_icb_cmd_wmask  (`E203_XLEN_MW'b0), 
+    .nice_icb_cmd_wmask  (nice_icb_cmd_wmask), 
     .nice_icb_cmd_lock   (1'b0), 
     .nice_icb_cmd_excl   (1'b0), 
     

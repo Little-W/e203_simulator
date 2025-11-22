@@ -485,7 +485,9 @@ module kernel_loader #(
             end
           end else begin
             // 当前tile所有行已发送完读请求
-            icb_cmd_valid <= 1'b0;
+            if (cmd_hs) begin // 等待最后一次握手完成
+              icb_cmd_valid <= '0;
+            end
           end
         end
 
@@ -658,12 +660,12 @@ module kernel_loader #(
     end else begin
       case (state)
         LOAD: begin
-          if (rsp_hs && rsp_beat_cnt == rsp_current_beats - 1 && rsp_col_cnt == rsp_current_cols - 1)
+          if (rsp_hs && rsp_beat_cnt == (rsp_current_beats - 1) && rsp_col_cnt == rsp_current_cols - 1)
             weight_data_valid <= 1'b1;
         end
 
         SEND: begin
-          if (send_weight_trigger || send_row_idx > 0) weight_data_valid <= 1'b0;
+          if (send_weight_trigger || send_row_idx < 15) weight_data_valid <= 1'b0;
         end
 
         default: weight_data_valid <= '0;

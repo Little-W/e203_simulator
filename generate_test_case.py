@@ -2,17 +2,19 @@ import numpy as np
 import os
 import random
 
-# 随机生成矩阵尺寸 (1~128)
-K = random.randint(16, 32)
-N = random.randint(16, 32)
-M = random.randint(16, 32)
+# 随机生成矩阵尺寸 (128~256)
+K = random.randint(4, 256)
+N = random.randint(4, 256)
+M = random.randint(4, 256)
 
 # 随机生成 lhs (A)、rhs (B) 的 int8 内容
 lhs = np.random.randint(-128, 128, size=(K, N), dtype=np.int8)
 rhs = np.random.randint(-128, 128, size=(N, M), dtype=np.int8)
 
+# 随机生成 bias (int32)
+bias = np.random.randint(-10000, 10000, size=M, dtype=np.int32)
 # bias 随机或为 0，这里先简单设为 0
-bias = np.zeros(M, dtype=np.int32)
+# bias = np.zeros(M, dtype=np.int32)
 
 # 计算累加结果 (int32)
 sum_result = np.dot(lhs.astype(np.int32), rhs.astype(np.int32))  # [K, M]

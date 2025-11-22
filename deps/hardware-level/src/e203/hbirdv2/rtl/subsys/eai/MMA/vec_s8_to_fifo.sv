@@ -245,19 +245,21 @@ module vec_s8_to_fifo #(
     end
   end
 
+  reg [3:0] output_mask_bigedian;
   // generate output_data
   always @(*) begin
     output_data = 32'b0;
-    output_mask = 4'b0;
+    output_mask_bigedian = 4'b0;
     if (stream_active) begin
       if (fifo_read_sel == 1'b0) begin
         output_data = fifo_mem0[output_ptr0][(cnt_each_row)*32+:32];
-        output_mask = stored_valid_col[(3-cnt_each_row)*4+:4];
+        output_mask_bigedian = stored_valid_col[(3-cnt_each_row)*4+:4];
       end else begin
         output_data = fifo_mem1[output_ptr1][(cnt_each_row)*32+:32];
-        output_mask = stored_valid_col[(3-cnt_each_row)*4+:4];
+        output_mask_bigedian = stored_valid_col[(3-cnt_each_row)*4+:4];
       end
     end
+    output_mask = {output_mask_bigedian[0], output_mask_bigedian[1], output_mask_bigedian[2], output_mask_bigedian[3]};
   end
 
 endmodule

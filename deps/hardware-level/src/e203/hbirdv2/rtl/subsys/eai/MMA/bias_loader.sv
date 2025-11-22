@@ -297,6 +297,8 @@ module bias_loader #(
               if ((tile_col + 1) >= num_col_tiles) begin
                 // 当前列已经是最后一列 -> 列回 0，并推进行
                 tile_col <= 32'd0;
+                next_tile_idx <= 0;
+                load_bias_req <= 1'b1;
                 if ((tile_row + 1) >= num_row_tiles) begin
                   // 行也到末尾 -> 所有 tile 完成
                   tile_row       <= 32'd0;
@@ -313,7 +315,7 @@ module bias_loader #(
               load_bias_req <= 1'b1;
             end
 
-            if (load_bias_granted) begin
+            if (load_bias_granted && load_bias_req) begin
               load_bias_req   <= 1'b0;
               rd_beats_cnt    <= 6'd0;
               beats_expect    <= cols_need_next[5:0];

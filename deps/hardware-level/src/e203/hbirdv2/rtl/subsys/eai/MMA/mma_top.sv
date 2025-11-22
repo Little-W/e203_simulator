@@ -9,7 +9,8 @@ module mma_top #(
     parameter int unsigned SIZE         = 16,  // 阵列大小
     parameter int unsigned BUS_WIDTH    = 32,  // 总线宽度
     parameter int unsigned REG_WIDTH    = 32,  // 寄存器宽度
-    parameter int unsigned ADDR_WIDTH   = 19   // 地址宽度
+    parameter int unsigned ADDR_WIDTH   = 19,  // 地址宽度
+    parameter int unsigned ICB_LEN_W    = 4    // ICB 突发长度宽度
 ) (
     //==== 时钟与复位 ====
     input wire clk,   // 系统时钟
@@ -59,7 +60,7 @@ module mma_top #(
     input  logic                   sa_icb_cmd_ready,
     output logic [ ADDR_WIDTH-1:0] sa_icb_cmd_addr,
     output logic                   sa_icb_cmd_read,
-    output logic [ `ICB_LEN_W-1:0] sa_icb_cmd_len,
+    output logic [  ICB_LEN_W-1:0] sa_icb_cmd_len,
     output logic [  BUS_WIDTH-1:0] sa_icb_cmd_wdata,
     output logic [BUS_WIDTH/8-1:0] sa_icb_cmd_wmask,
     output logic                   sa_icb_w_valid,
@@ -183,7 +184,7 @@ module mma_top #(
   icb_ext_flat_adapter #(
       .WIDTH (BUS_WIDTH),
       .ADDR_W(ADDR_WIDTH),
-      .LEN_W (`ICB_LEN_W),
+      .LEN_W (ICB_LEN_W),
       .MW    (BUS_WIDTH / 8)
   ) u_icb_flat_adapter (
       .clk             (clk),
@@ -558,7 +559,7 @@ module mma_top #(
   genvar i;
   generate
     for (i = 0; i < SIZE; i = i + 1) begin : gen_unpack_in_vec
-      assign in_vec_s8[i*8+:8] = requant_out[i] ;
+      assign in_vec_s8[i*8+:8] = requant_out[i];
     end
   endgenerate
 

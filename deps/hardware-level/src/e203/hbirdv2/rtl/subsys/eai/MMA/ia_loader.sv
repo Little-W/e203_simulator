@@ -511,7 +511,9 @@ module ia_loader #(
             end
           end else begin
             // 当前tile所有行已发送完读请求
-            icb_cmd_valid <= 1'b0;
+            if (cmd_hs) begin // 等待最后一个请求握手完成
+              icb_cmd_valid <= 1'b0;
+            end
           end
         end
 
@@ -801,7 +803,7 @@ module ia_loader #(
   //assign ia_row_valid = (state == SEND) && (send_row_idx > 0 || send_ia_trigger);
   //assign ia_row_valid = (state == SEND) && (send_row_idx > 0);// || send_ia_trigger);
   assign ia_is_init_data = is_first_tile && (state == SEND);
-  assign ia_calc_done = (is_last_col_tile && is_last_loop) && (state == SEND) && ia_row_valid;
+  assign ia_calc_done = (is_last_col_tile) && (state == SEND) && ia_row_valid;
 
   generate
     for (genvar i = 0; i < SIZE; i++) begin : gen_ia_out
