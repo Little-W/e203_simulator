@@ -28,6 +28,7 @@ SIM_OPTIONS   += --no-timing
 endif
 SIM_OPTIONS_BACK := --top-module tb_top --exe -DE203_XLEN=32 -DDISABLE_SV_ASSERTION=1 -DE203_CFG_ITCM_ADDR_WIDTH=20 -DSIMULATION=1
 SIM_OPTIONS_BACK   += ${SIM_OPTIONS_COMMON}
+SIM_OPTIONS_BACK   += --threads 4
 VTB_DIR      := ${BUILD_DIR}/${CORE}_tb/tb_verilator
 VERILATOR_CC_FILE := ${VTB_DIR}/tb_top.cc
 endif

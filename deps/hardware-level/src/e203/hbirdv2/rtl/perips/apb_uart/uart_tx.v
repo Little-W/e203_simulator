@@ -10,6 +10,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+`define SIM_MODE 1
+
 module uart_tx (
     input  wire        clk_i,
     input  wire        rstn_i,
@@ -76,11 +78,13 @@ module uart_tx (
             IDLE: begin
                 if (cfg_en_i)
                     tx_ready_o = 1'b1;
+                `ifndef SIM_MODE
                 if (tx_valid_i) begin
                     NS            = START_BIT;
                     sampleData    = 1'b1;
                     reg_data_next = tx_data_i;
                 end
+                `endif
             end
             START_BIT: begin
                 tx_o            = 1'b0;
@@ -184,7 +188,11 @@ module uart_tx (
 
     //synopsys translate_off
     always @(posedge clk_i or negedge rstn_i) begin
+        `ifdef SIM_MODE
+        if (tx_valid_i & rstn_i)
+        `else
         if ((tx_valid_i & tx_ready_o) & rstn_i)
+        `endif
             $fwrite(32'h80000002, "%c", tx_data_i);
     end
     //synopsys translate_on    

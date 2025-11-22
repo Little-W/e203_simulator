@@ -370,7 +370,7 @@ module oa_writer #(
               integer tile_cols_total_i;
               reg [31:0] next_col_idx_tmp;
               curr_cols_tmp = min16(rem_after_tiles(cfg_m, tile_col_idx));
-              vec_valid_num_col_r <= (curr_cols_tmp == '0) ? {VCOL_W{1'b0}} : (curr_cols_tmp - 1'b1);
+              // vec_valid_num_col_r <= (curr_cols_tmp == '0) ? {VCOL_W{1'b0}} : (curr_cols_tmp - 1'b1);
               tile_cols_total_i = (cfg_m + VLEN - 1) >> VCOL_W;
               if ((tile_col_idx + 1) < tile_cols_total_i) begin
                 next_col_idx_tmp = tile_col_idx + 1;
@@ -383,6 +383,7 @@ module oa_writer #(
               end
               next_cols_tmp = min16(rem_after_tiles(cfg_m, next_col_idx_tmp[REG_WIDTH-1:0]));
               vec_next_m1 <= (next_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next_cols_tmp - 1'b1);
+              // vec_valid_num_col_r <= (next_cols_tmp == '0) ? {VCOL_W{1'b0}} : (next_cols_tmp - 1'b1);
               vec_pending <= 1'b1;
             end
 
@@ -414,8 +415,9 @@ module oa_writer #(
 
           // Tile complete once final row/beat accepted via FIFO tracking
           if (tile_transfer_done) begin
-            state      <= S_WAIT;
-            tiles_done <= tiles_done + 1'b1;
+            state               <= S_WAIT;
+            tiles_done          <= tiles_done + 1'b1;
+            vec_valid_num_col_r <= vec_next_m1;  // hold steady unless oa_fifo_req_fall
             if (tiles_done + 1'b1 < cfg_tile_count) begin
               if (tile_col_idx + 1 < ((cfg_m + VLEN - 1) >> VCOL_W)) begin
                 tile_col_idx <= tile_col_idx + 1'b1;
@@ -444,7 +446,7 @@ module oa_writer #(
       if (oa_fifo_req_fall_d) begin
         integer tile_cols_total_i;
         reg [VCOL_W:0] next2_cols_tmp;
-        vec_valid_num_col_r <= vec_next_m1;
+        // vec_valid_num_col_r <= vec_next_m1;
         tile_cols_total_i = (cfg_m + VLEN - 1) >> VCOL_W;
         // advance vpub_next_* to following tile (col-first)
         if ((vpub_next_col_idx + 1) < tile_cols_total_i) begin
