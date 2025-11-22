@@ -14,7 +14,7 @@ from typing import Dict, Tuple, Optional
 MEMORY_REGIONS = {
     'ilm': {
         'start': 0x80000000,
-        'size': 64 * 1024,  # 256KB
+        'size': 256 * 1024,  # 256KB
     },
     'extram': {
         'start': 0x00080000,
@@ -22,7 +22,7 @@ MEMORY_REGIONS = {
     },
     'ram': {
         'start': 0x90000000,
-        'size': 64 * 1024,  # 256KB
+        'size': 256 * 1024,  # 256KB
     }
 }
 
