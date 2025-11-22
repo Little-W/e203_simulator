@@ -4,6 +4,7 @@ import shutil
 import time
 import signal
 import sys
+import select  # 新增导入
 
 # 配置参数
 NUM_ITERATIONS = 100  # 循环次数，可调整
@@ -32,30 +33,35 @@ def run_iteration(iteration_id):
         last_output_time = time.time()
         finished = False
         while True:
-            line = process.stdout.readline()
-            if not line:
-                break
-            log_file.write(line)
-            log_file.flush()  # 确保实时写入
-            last_output_time = time.time()  # 更新最后输出时间
-            if "Test Finished." in line:
-                finished = True
-                process.terminate()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                break
-            if time.time() - last_output_time > TIMEOUT_SECONDS:
-                print(f"第 {iteration_id} 轮 5分钟无输出，终止进程。")
-                process.terminate()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                # 保存异常用例
-                shutil.copy("/home/etc/FPGA/e203_simulator/eai_csrc/test_case.c", os.path.join(EXCEPTION_DIR, f"exception_{iteration_id}.c"))
-                return "exception", None
+            # 非阻塞等待输出，最多1秒
+            ready, _, _ = select.select([process.stdout], [], [], 1.0)
+            if ready:
+                line = process.stdout.readline()
+                if not line:
+                    break
+                log_file.write(line)
+                log_file.flush()  # 确保实时写入
+                last_output_time = time.time()  # 更新最后输出时间
+                if "Test Finished." in line:
+                    finished = True
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                    break
+            else:
+                # 没有输出，检查超时
+                if time.time() - last_output_time > TIMEOUT_SECONDS:
+                    print(f"第 {iteration_id} 轮 5分钟无输出，终止进程。")
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                    # 保存异常用例
+                    shutil.copy("/home/etc/FPGA/e203_simulator/eai_csrc/test_case.c", os.path.join(EXCEPTION_DIR, f"exception_{iteration_id}.c"))
+                    return "exception", None
         
         # 如果没有找到 "Test Finished."，也标记为异常
         if not finished:
