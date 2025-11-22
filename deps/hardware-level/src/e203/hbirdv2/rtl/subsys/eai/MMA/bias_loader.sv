@@ -294,6 +294,11 @@ module bias_loader #(
             // 只在 tile 结束时清 bias_valid（符合你的要求）
             if (tile_calc_over) begin
               bias_valid <= 1'b0;
+              // OUT 态也允许在 tile_over 后拉起下一块的预取
+              if (cfg_need_bias && tile_calc_over && (cols_need_next != 0)) begin
+                load_bias_req <= 1'b1;
+              end
+
               if ((tile_col + 1) >= num_col_tiles) begin
                 // 当前列已经是最后一列 -> 列回 0，并推进行
                 tile_col <= 32'd0;
@@ -303,6 +308,7 @@ module bias_loader #(
                   // 行也到末尾 -> 所有 tile 完成
                   tile_row       <= 32'd0;
                   all_tiles_done <= 1'b1;
+                  load_bias_req  <= 1'b0;
                   //quant_params_valid <= 1'b0;
                 end else tile_row <= tile_row + 1;
               end else
@@ -310,10 +316,6 @@ module bias_loader #(
                 tile_col <= tile_col + 1;
             end
             //if (load_bias_granted) load_bias_req <= 1'b0;
-            // OUT 态也允许在 tile_over 后拉起下一块的预取
-            if (cfg_need_bias && tile_calc_over && (cols_need_next != 0)) begin
-              load_bias_req <= 1'b1;
-            end
 
             if (load_bias_granted && load_bias_req) begin
               load_bias_req   <= 1'b0;
@@ -335,7 +337,7 @@ module bias_loader #(
 
           default: state <= IDLE;
         endcase
-        if(!cfg_need_bias) begin
+        if (!cfg_need_bias) begin
           bias_valid <= 1'b1;
         end
       end
