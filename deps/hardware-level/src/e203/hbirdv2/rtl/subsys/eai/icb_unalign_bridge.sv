@@ -136,9 +136,9 @@ module icb_unalign_bridge #(
   // FIFO读取控制 - cmd完成且rsp到最后一拍并fire才能处理下一个请求
   // 初始状态：cmd和rsp都IDLE时可以开始
   // 后续状态：cmd完成且rsp最后一拍fire时才能开始下一个
-  assign cmd_fifo_ren = !cmd_fifo_empty && 
+  assign cmd_fifo_ren = !cmd_fifo_empty &&
                         ((cmd_state == IDLE && rsp_state == IDLE)
-                         || (rd_last_burst && rsp_fire)
+                         || (rd_last_burst && rsp_fire && !cmd_pending)
                         );
   assign {fifo_is_read, fifo_len, fifo_addr} = cmd_fifo_rdata;
 
@@ -202,16 +202,14 @@ module icb_unalign_bridge #(
       if (rsp_state_nxt == IDLE && cmd_state_nxt == IDLE) begin
         cur_len_0start <= '0;
       end
+      if ((cur_burst_cnt == burst_cycle_1start - 1) && cmd_fire) begin
+        cmd_pending <= 1'b0;
+      end
       if (cmd_fifo_ren) begin
         cur_is_read <= fifo_is_read;
         cur_addr <= fifo_addr;
         cur_len_0start <= fifo_len;
-        if (cmd_state != IDLE) begin
-          cmd_pending <= 1'b1;
-        end
-      end
-      if (cmd_state == IDLE) begin
-        cmd_pending <= 1'b0;
+        cmd_pending <= 1'b1;
       end
     end
   end
@@ -287,7 +285,7 @@ module icb_unalign_bridge #(
             burst_cnt_nxt = cur_burst_cnt + 1'b1;
           end
         end
-        if(cmd_fifo_ren) begin
+        if (cmd_fifo_ren) begin
           cmd_state_nxt = FIRST;
           burst_cnt_nxt = '0;
         end
@@ -503,7 +501,8 @@ module icb_unalign_bridge #(
     case (rsp_state)
       IDLE: begin
         //if (rsp_fire&&!rd_last_burst)
-        if (m_icb_rsp_ready && m_icb_rsp_valid && (!rd_last_burst || cmd_state == FIRST)) rsp_state_nxt = BURST;
+        if (m_icb_rsp_ready && m_icb_rsp_valid && (!rd_last_burst || cmd_state == FIRST))
+          rsp_state_nxt = BURST;
       end
 
 
