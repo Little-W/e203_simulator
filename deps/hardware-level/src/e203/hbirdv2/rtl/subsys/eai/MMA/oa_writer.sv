@@ -204,7 +204,9 @@ module oa_writer #(
   reg                  vec_pending;
   reg                  oa_fifo_req_q;
   wire                 oa_fifo_req_fall = oa_fifo_req_q & ~oa_fifo_req;
-  reg                  oa_fifo_req_fall_d;
+  // reg                  oa_fifo_req_fall_d;
+  reg                  write_oa_req_d;
+  wire                 write_oa_req_fall = write_oa_req_d & ~write_oa_req;
 
   // Preview-next indices for vec_valid publication (col-first order)
   reg  [         31:0] vpub_next_row_idx;
@@ -215,8 +217,10 @@ module oa_writer #(
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       oa_fifo_req_q <= 1'b0;
+      write_oa_req_d <= 1'b0;
     end else begin
       oa_fifo_req_q <= oa_fifo_req;
+      write_oa_req_d <= write_oa_req;
     end
   end
 
@@ -331,9 +335,9 @@ module oa_writer #(
           // First-tile kick: request the bus as soon as FIFO requests
           // (no external trigger needed)
           if (oa_fifo_req) begin
-            write_oa_req <= 1'b1;
-            has_grant    <= 1'b0;
-            state        <= S_WAIT;
+            write_oa_req   <= 1'b1;
+            has_grant      <= 1'b0;
+            state          <= S_WAIT;
           end
         end
 
@@ -442,8 +446,8 @@ module oa_writer #(
 
         end
       endcase
-      // Publish new vec_valid when upstream deasserts oa_fifo_req (falling edge)
-      if (oa_fifo_req_fall_d) begin
+      // Publish new vec_valid when upstream deasserts write_oa_req (falling edge)
+      if (write_oa_req_fall) begin
         integer tile_cols_total_i;
         reg [VCOL_W:0] next2_cols_tmp;
         // vec_valid_num_col_r <= vec_next_m1;
@@ -463,12 +467,12 @@ module oa_writer #(
     end
   end
 
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      oa_fifo_req_fall_d <= 1'b0;
-    end else begin
-      oa_fifo_req_fall_d <= oa_fifo_req_fall;
-    end
-  end
+  // always @(posedge clk or negedge rst_n) begin
+  //   if (!rst_n) begin
+  //     oa_fifo_req_fall_d <= 1'b0;
+  //   end else begin
+  //     oa_fifo_req_fall_d <= oa_fifo_req_fall;
+  //   end
+  // end
 
 endmodule
