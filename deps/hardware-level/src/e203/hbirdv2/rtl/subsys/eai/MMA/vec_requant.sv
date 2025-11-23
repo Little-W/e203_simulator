@@ -179,6 +179,9 @@ module vec_requant #(
   icb_ext_cmd_m_t icb_cmd_m_reg, icb_cmd_m_wire;
   icb_ext_rsp_m_t icb_rsp_m_wire;
 
+  wire cmd_hskd = icb_cmd_m_reg.valid && icb_cmd_s.ready;
+  wire rsp_hskd = icb_rsp_s.rsp_valid && icb_rsp_m.rsp_ready;
+
   // master 侧：响应 ready 常 1；不使用写通道
   assign icb_wr_m  = '{default: '0};
   assign icb_rsp_m = '{rsp_ready: 1'b1};
@@ -279,9 +282,10 @@ module vec_requant #(
                                     : (sh_base_r  + tile_col*VLEN*BYTES_PER_WORD);
               icb_cmd_m_reg.len <= burst_len_cur;  // len = lane_need_cur - 1
 
-              if (icb_cmd_s.ready) begin
+              if (cmd_hskd) begin
                 // 命令已被对端接受，本次突发开始
                 cmd_busy     <= 1'b1;
+                icb_cmd_m_reg.valid <= 1'b0;  // 下拍取消 valid
                 rd_beats_cnt <= 6'd0;
                 beats_expect <= lane_need_cur[5:0];  // 需要收的拍数
               end
