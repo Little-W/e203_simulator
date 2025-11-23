@@ -199,6 +199,9 @@ module icb_unalign_bridge #(
       cmd_pending <= 1'b0;
     end else begin
       // 在读取FIFO时就锁定当前请求信息，直到rsp完成才更新下一个
+      if (rsp_state_nxt == IDLE && cmd_state_nxt == IDLE) begin
+        cur_len_0start <= '0;
+      end
       if (cmd_fifo_ren) begin
         cur_is_read <= fifo_is_read;
         cur_addr <= fifo_addr;
@@ -254,7 +257,7 @@ module icb_unalign_bridge #(
 
     case (cmd_state)
       IDLE: begin
-        if (cmd_fifo_ren || cmd_pending) begin
+        if (cmd_fifo_ren) begin
           cmd_state_nxt = FIRST;
           burst_cnt_nxt = '0;
         end
@@ -500,7 +503,7 @@ module icb_unalign_bridge #(
     case (rsp_state)
       IDLE: begin
         //if (rsp_fire&&!rd_last_burst)
-        if (m_icb_rsp_ready && m_icb_rsp_valid && !rd_last_burst) rsp_state_nxt = BURST;
+        if (m_icb_rsp_ready && m_icb_rsp_valid && (!rd_last_burst || cmd_state == FIRST)) rsp_state_nxt = BURST;
       end
 
 
