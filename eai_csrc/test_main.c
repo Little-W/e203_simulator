@@ -30,9 +30,7 @@
         uint32_t _M = (uint32_t)(M); \
         uint32_t _r = _M ? (_idx / _M) : 0; \
         uint32_t _c = _M ? (_idx % _M) : _idx; \
-        if ((actual) == (expected)) { \
-            printf("%s %s @(%u,%u): 0x%02X == 0x%02X\n", TEST_PASS, msg, _r, _c, (uint8_t)(actual), (uint8_t)(expected)); \
-        } else { \
+        if ((actual) != (expected)) { \
             printf("%s %s @(%u,%u): 0x%02X != 0x%02X\n", TEST_FAIL, msg, _r, _c, (uint8_t)(actual), (uint8_t)(expected)); \
             test_failed++; \
         } \

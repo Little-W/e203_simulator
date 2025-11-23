@@ -7,7 +7,7 @@ import sys
 import select  # 新增导入
 
 # 配置参数
-NUM_ITERATIONS = 100  # 循环次数，可调整
+NUM_ITERATIONS = 500  # 循环次数，可调整
 LOG_DIR = "/home/etc/FPGA/e203_simulator/test_logs"
 EXCEPTION_DIR = "/home/etc/FPGA/e203_simulator/exception_cases"
 TIMEOUT_SECONDS = 300  # 5分钟超时
